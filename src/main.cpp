@@ -21,8 +21,9 @@ struct InsertionInfo{//ok
 };
 
 vector<int> escolher4NosAleatorios(int& tamanho){//ok
-    vector<int> s;
-    int num[4], achou;
+    vector<int> s(5);//mudando a inicializacao
+    int num[4];
+    bool achou;
     
     //srand(time(NULL));
     
@@ -43,21 +44,30 @@ vector<int> escolher4NosAleatorios(int& tamanho){//ok
         }
     }
     
+    s[0] = num[0];
+    s[1] = num[1];
+    s[2] = num[2];
+    s[3] = num[3];
+    s[4] = num[0];
+
+    /*
     s.push_back(num[0]);
     s.push_back(num[1]);
     s.push_back(num[2]);
     s.push_back(num[3]);
     s.push_back(num[0]);
+    */
 
     return s;
 }
 
 vector<int> nosRestantes(vector<int>& sequencia, int& tamanho){//fiz especificamente para 4 membros//ok
-    vector<int> CL;
+    vector<int> CL(tamanho - (sequencia.size() - 1));//mudei a inicializacao
+    int cont = 0;
 
     for(int i = 1; i <= tamanho; i++){
-        if(i != sequencia[0] && i != sequencia[1] && i != sequencia[2] && i != sequencia[3]){
-            CL.push_back(i);
+        if((i != sequencia[0]) && (i != sequencia[1]) && (i != sequencia[2]) && (i != sequencia[3])){
+            CL[cont++] = i;
         }
     }
 
@@ -79,9 +89,9 @@ void printarCustoInsercao(vector<InsertionInfo>& custoInsercao){
     }
 }
 
-void calcularValorObj(Solucao& s, Data& data){//ok
-    size_t tamanhoS = s.sequencia.size();
-    for(int i = 0; i < tamanhoS - 1; i++){
+void calcularValorObj(Solucao& s, Data& data){//ok //se der erro aqui depois mudar o valorObj para 0 obrigatoriamente antes de calcular
+    size_t tamanhoS = s.sequencia.size() - 1;
+    for(int i = 0; i < tamanhoS; i++){
         s.valorObj += data.getDistance(s.sequencia[i], s.sequencia[i+1]);
     }
 }
@@ -90,10 +100,10 @@ vector<InsertionInfo> calcularCustoInsercao(Solucao& s, vector<int>& CL, Data& d
     size_t tamanhoS = (s.sequencia.size() - 1);
     vector<InsertionInfo> custoInsercao(tamanhoS * CL.size());
     int l = 0;
-    for(int a = 0; a < tamanhoS; a++){
+    for(int a = 0; a < tamanhoS; a++){//percorrer todas as arestas
         int i = s.sequencia[a];
         int j = s.sequencia[a+1];
-        for(auto k : CL){
+        for(auto k : CL){//percorrer todos os nos
             custoInsercao[l].custo = data.getDistance(i, k) + data.getDistance(j, k) - data.getDistance(i, j);
             custoInsercao[l].noInserido = k;
             custoInsercao[l].arestaRemovida = a;
@@ -105,13 +115,14 @@ vector<InsertionInfo> calcularCustoInsercao(Solucao& s, vector<int>& CL, Data& d
 }
 
 void ordenarEmOrdemCrescente(vector<InsertionInfo>& custoInsercao){//ok
-    int trocou = 1, tamanhoCusto = custoInsercao.size();
+    bool trocou = 1;
+    int tamanhoCusto = custoInsercao.size() - 1;
     InsertionInfo aux;
 
     while(trocou){
         trocou = 0;
 
-        for(int i = 0; i < tamanhoCusto - 1; i++){
+        for(int i = 0; i < tamanhoCusto; i++){
             if(custoInsercao[i].custo > custoInsercao[i+1].custo){
                 aux = custoInsercao[i];
                 custoInsercao[i] = custoInsercao[i+1];
@@ -126,18 +137,18 @@ void ordenarEmOrdemCrescente(vector<InsertionInfo>& custoInsercao){//ok
 }
 
 void inserirNaSolucao(Solucao& s, vector<int>& CL, InsertionInfo& custoInsercao){//ok
-//inserir na solucao s
-s.sequencia.insert(s.sequencia.begin() + custoInsercao.arestaRemovida + 1, custoInsercao.noInserido);
-s.valorObj += custoInsercao.custo;
-//tirar o no de CL
-auto fim = CL.end();
-for(auto it = CL.begin(); it != fim; it++){
-    if(*it == custoInsercao.noInserido){
-        CL.erase(it);    
-        break;
+    //inserir na solucao s
+    s.sequencia.insert(s.sequencia.begin() + custoInsercao.arestaRemovida + 1, custoInsercao.noInserido);
+    s.valorObj += custoInsercao.custo;
+    //tirar o no de CL
+    auto fim = CL.end();
+    for(auto it = CL.begin(); it != fim; it++){
+        if(*it == custoInsercao.noInserido){
+            CL.erase(it);    
+            break;
+        }
     }
-}
-//usando as informacoes do custoInsercao
+    //usando as informacoes do custoInsercao
 }
 
 Solucao Construcao(int& dimension, Data& data){//ok
@@ -150,12 +161,29 @@ Solucao Construcao(int& dimension, Data& data){//ok
     calcularValorObj(s, data);
     vector<int> CL = nosRestantes(s.sequencia, dimension);
     //printarSequencia(CL);//debug
+    int selecionado, limite;
 
     while(!CL.empty()){
         vector<InsertionInfo> custoInsercao = calcularCustoInsercao(s, CL, data);
+
         ordenarEmOrdemCrescente(custoInsercao);
+
+        //printarCustoInsercao(custoInsercao);//debug
+
         double alpha = (double)(rand() % RAND_MAX + 1) / RAND_MAX;//numero aleatorio de 0 a 1
-        int selecionado = rand() % ((int) ceil(alpha * custoInsercao.size()));
+        //cout << "Alpha: " << alpha << endl;//debug
+
+        limite = (int)(alpha * custoInsercao.size());
+        if(limite == 0){
+            selecionado = 0;
+        }else{
+            selecionado = limite;
+        }
+
+        //cout << "Margem1: " << (int) ceil(alpha * custoInsercao.size()) << endl;//debug
+        //cout << "Margem2: " << ((int)(alpha * custoInsercao.size())) << endl;//debug
+        //cout << "Selecionado: " << selecionado+1 << endl;//debug
+
         inserirNaSolucao(s, CL, custoInsercao[selecionado]);
     }
 
@@ -393,10 +421,12 @@ Solucao Perturbacao(Solucao s, Data& data, int dimension){
 Solucao ILS(int maxIter, int maxIterIls, int& dimension, Data& data){
     Solucao bestOfAll;
     bestOfAll.valorObj = INFINITY;
-    int n = 14;
+    //int n = 14;//acho que pode tirar
 
     for(int i = 0; i < maxIter; i++){
+        cout << "Comecando uma nota iteracao\n";
         Solucao s = Construcao(dimension, data);
+        //printarSequencia(s.sequencia);//debug
         Solucao best = s;
 
         int iterIls = 0;
@@ -404,11 +434,11 @@ Solucao ILS(int maxIter, int maxIterIls, int& dimension, Data& data){
         while(iterIls <= maxIterIls){
             BuscaLocal(s, data);
 
-            if(s.valorObj < best.valorObj)
-            {
+            if(s.valorObj < best.valorObj){
                 best = s;
                 iterIls = 0;
             }
+
             s = Perturbacao(best, data, dimension);
             
             iterIls++;
@@ -416,6 +446,7 @@ Solucao ILS(int maxIter, int maxIterIls, int& dimension, Data& data){
         if (best.valorObj < bestOfAll.valorObj){
             bestOfAll = best;
         }
+        
     }
 
     return bestOfAll;
@@ -427,9 +458,9 @@ int main(int argc, char** argv) {
 
     auto data = Data(argc, argv[1]);
     data.read();
-    int n = data.getDimension();
+    int n = data.getDimension();//quantidade de cidades
     int maxIter = 50, maxIterILS;
-    int acaba = 200;
+    //int acaba = 200; //acho que pode tirar
 
     if(n >= 150){
         maxIterILS = n/2;
@@ -443,7 +474,7 @@ int main(int argc, char** argv) {
         clock_t end = clock();
 
         double tempo = (double)(end - start) / (double)(CLOCKS_PER_SEC);
-        printf("%.2lf %.3lf\n", s.valorObj, tempo);
+        printf("%.3lf %.2lf\n", tempo, s.valorObj);//tirei para debugar
     }
         
     return 0;
