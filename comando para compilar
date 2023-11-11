@@ -1,0 +1,4 @@
+g++ -m32 src/*.cpp -o tsp
+
+//mudar o nome da  instancia
+.\"tsp.exe" ./instances/burma14.tsp 
