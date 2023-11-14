@@ -4,6 +4,7 @@
 #include <math.h>
 #include <stdlib.h>
 #include <time.h>
+#include <algorithm>
 
 using namespace std;
 
@@ -136,6 +137,10 @@ void ordenarEmOrdemCrescente(vector<InsertionInfo>& custoInsercao){//ok
     return;
 }
 
+bool maisCaro(InsertionInfo custo1, InsertionInfo custo2){
+    return (custo1.custo < custo2.custo);
+}
+
 void inserirNaSolucao(Solucao& s, vector<int>& CL, InsertionInfo& custoInsercao){//ok
     //inserir na solucao s
     s.sequencia.insert(s.sequencia.begin() + custoInsercao.arestaRemovida + 1, custoInsercao.noInserido);
@@ -152,6 +157,7 @@ void inserirNaSolucao(Solucao& s, vector<int>& CL, InsertionInfo& custoInsercao)
 }
 
 Solucao Construcao(int& dimension, Data& data){//ok
+    //cout << "Entrei na construcao\n";
     Solucao s = {{}, 0.0};
 
     //srand(time(NULL));
@@ -159,33 +165,55 @@ Solucao Construcao(int& dimension, Data& data){//ok
     s.sequencia = escolher4NosAleatorios(dimension);
     //printarSequencia(s.sequencia);//debug
     calcularValorObj(s, data);
+
     vector<int> CL = nosRestantes(s.sequencia, dimension);
     //printarSequencia(CL);//debug
     int selecionado, limite;
+    double alpha;
 
     while(!CL.empty()){
+        //cout << "Entrei no while\n";
+        //printarSequencia(s.sequencia);//debug
+        //printarSequencia(CL);//debug
+        //scanf("%*c");//debug
+
         vector<InsertionInfo> custoInsercao = calcularCustoInsercao(s, CL, data);
 
-        ordenarEmOrdemCrescente(custoInsercao);
+        sort(custoInsercao.begin(), custoInsercao.end(), maisCaro);//quick sort
+        //ordenarEmOrdemCrescente(custoInsercao);//bubble sort
 
         //printarCustoInsercao(custoInsercao);//debug
+        //scanf("%*c");//debug
 
-        double alpha = (double)(rand() % RAND_MAX + 1) / RAND_MAX;//numero aleatorio de 0 a 1
+        alpha = (double)(rand() % RAND_MAX + 1) / RAND_MAX;//numero aleatorio de 0 a 1
         //cout << "Alpha: " << alpha << endl;//debug
 
         limite = (int)(alpha * custoInsercao.size());
+        
         if(limite == 0){
             selecionado = 0;
         }else{
-            selecionado = limite;
+            selecionado = rand() % limite;
         }
 
         //cout << "Margem1: " << (int) ceil(alpha * custoInsercao.size()) << endl;//debug
         //cout << "Margem2: " << ((int)(alpha * custoInsercao.size())) << endl;//debug
         //cout << "Selecionado: " << selecionado+1 << endl;//debug
 
+        /*printarSequencia(s.sequencia);//debug
+        cout << "Quantidade de pares: " << custoInsercao.size() << endl;
+        cout << "Par selecionado: " << selecionado << endl;
+        cout << "No inserido: " << custoInsercao[selecionado].noInserido
+        << " | Aresta selecionada: " << custoInsercao[selecionado].arestaRemovida << endl;
+        */
+
         inserirNaSolucao(s, CL, custoInsercao[selecionado]);
+        //cout << "Cheguei aqui\n";
+        //cout << custoInsercao[selecionado].noInserido << " inserido\n";
     }
+    
+    //cout << "Final: ";
+    //printarSequencia(s.sequencia);//debug
 
     return s;
 }
@@ -423,8 +451,11 @@ Solucao ILS(int maxIter, int maxIterIls, int& dimension, Data& data){
     bestOfAll.valorObj = INFINITY;
     //int n = 14;//acho que pode tirar
 
+    double tempo = 0;
+
     for(int i = 0; i < maxIter; i++){
-        cout << "Comecando uma nota iteracao\n";
+        //cout << "Comecando uma nota iteracao\n";
+
         Solucao s = Construcao(dimension, data);
         //printarSequencia(s.sequencia);//debug
         Solucao best = s;
@@ -439,6 +470,12 @@ Solucao ILS(int maxIter, int maxIterIls, int& dimension, Data& data){
                 iterIls = 0;
             }
 
+            /*clock_t start = clock();
+            s = Perturbacao(best, data, dimension);
+            clock_t end = clock();
+
+            tempo += (double)(end - start) / (double)(CLOCKS_PER_SEC);
+            //printf("%.3lf %.2lf\n", tempo, s.valorObj);//tirei para debugar*/
             s = Perturbacao(best, data, dimension);
             
             iterIls++;
@@ -446,8 +483,8 @@ Solucao ILS(int maxIter, int maxIterIls, int& dimension, Data& data){
         if (best.valorObj < bestOfAll.valorObj){
             bestOfAll = best;
         }
-        
     }
+    //printf("%.3lf\n", tempo);//tirei para debugar
 
     return bestOfAll;
 }
