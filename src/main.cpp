@@ -10,18 +10,20 @@ using namespace std;
 
 //o programa esta com o custo atualizando em cada funcao
 
-typedef struct Solucao{//ok
+double tempo = 0;
+
+typedef struct Solucao{
     vector<int> sequencia;
     double valorObj;
 }Solucao;
 
-struct InsertionInfo{//ok
+struct InsertionInfo{
     int noInserido; // no k a ser inserido
     int arestaRemovida; // aresta {i,j} na qual o no k sera inserido
     double custo; // delta ao inserir k na aresta {i,j}
 };
 
-vector<int> escolher4NosAleatorios(int& tamanho){//ok
+vector<int> escolher4NosAleatorios(int& tamanho){
     vector<int> s(5);//mudando a inicializacao
     int num[4];
     bool achou;
@@ -62,7 +64,7 @@ vector<int> escolher4NosAleatorios(int& tamanho){//ok
     return s;
 }
 
-vector<int> nosRestantes(vector<int>& sequencia, int& tamanho){//fiz especificamente para 4 membros//ok
+vector<int> nosRestantes(vector<int>& sequencia, int& tamanho){//fiz especificamente para 4 membros
     vector<int> CL(tamanho - (sequencia.size() - 1));//mudei a inicializacao
     int cont = 0;
 
@@ -90,20 +92,22 @@ void printarCustoInsercao(vector<InsertionInfo>& custoInsercao){
     }
 }
 
-void calcularValorObj(Solucao& s, Data& data){//ok //se der erro aqui depois mudar o valorObj para 0 obrigatoriamente antes de calcular
+void calcularValorObj(Solucao& s, Data& data){
     size_t tamanhoS = s.sequencia.size() - 1;
     for(int i = 0; i < tamanhoS; i++){
         s.valorObj += data.getDistance(s.sequencia[i], s.sequencia[i+1]);
     }
 }
 
-vector<InsertionInfo> calcularCustoInsercao(Solucao& s, vector<int>& CL, Data& data){//acho que ok
+vector<InsertionInfo> calcularCustoInsercao(Solucao& s, vector<int>& CL, Data& data){
     size_t tamanhoS = (s.sequencia.size() - 1);
     vector<InsertionInfo> custoInsercao(tamanhoS * CL.size());
     int l = 0;
-    for(int a = 0; a < tamanhoS; a++){//percorrer todas as arestas
-        int i = s.sequencia[a];
-        int j = s.sequencia[a+1];
+    int a, i, j;
+
+    for(a = 0; a < tamanhoS; a++){//percorrer todas as arestas
+        i = s.sequencia[a];
+        j = s.sequencia[a+1];
         for(auto k : CL){//percorrer todos os nos
             custoInsercao[l].custo = data.getDistance(i, k) + data.getDistance(j, k) - data.getDistance(i, j);
             custoInsercao[l].noInserido = k;
@@ -115,7 +119,7 @@ vector<InsertionInfo> calcularCustoInsercao(Solucao& s, vector<int>& CL, Data& d
     return custoInsercao;
 }
 
-void ordenarEmOrdemCrescente(vector<InsertionInfo>& custoInsercao){//ok
+void ordenarEmOrdemCrescente(vector<InsertionInfo>& custoInsercao){
     bool trocou = 1;
     int tamanhoCusto = custoInsercao.size() - 1;
     InsertionInfo aux;
@@ -141,7 +145,7 @@ bool maisCaro(InsertionInfo custo1, InsertionInfo custo2){
     return (custo1.custo < custo2.custo);
 }
 
-void inserirNaSolucao(Solucao& s, vector<int>& CL, InsertionInfo& custoInsercao){//ok
+void inserirNaSolucao(Solucao& s, vector<int>& CL, InsertionInfo& custoInsercao){
     //inserir na solucao s
     s.sequencia.insert(s.sequencia.begin() + custoInsercao.arestaRemovida + 1, custoInsercao.noInserido);
     s.valorObj += custoInsercao.custo;
@@ -156,37 +160,25 @@ void inserirNaSolucao(Solucao& s, vector<int>& CL, InsertionInfo& custoInsercao)
     //usando as informacoes do custoInsercao
 }
 
-Solucao Construcao(int& dimension, Data& data){//ok
-    //cout << "Entrei na construcao\n";
+Solucao Construcao(int& dimension, Data& data){
     Solucao s = {{}, 0.0};
 
-    //srand(time(NULL));
 
     s.sequencia = escolher4NosAleatorios(dimension);
-    //printarSequencia(s.sequencia);//debug
+    
     calcularValorObj(s, data);
 
     vector<int> CL = nosRestantes(s.sequencia, dimension);
-    //printarSequencia(CL);//debug
+
     int selecionado, limite;
     double alpha;
 
     while(!CL.empty()){
-        //cout << "Entrei no while\n";
-        //printarSequencia(s.sequencia);//debug
-        //printarSequencia(CL);//debug
-        //scanf("%*c");//debug
-
         vector<InsertionInfo> custoInsercao = calcularCustoInsercao(s, CL, data);
 
         sort(custoInsercao.begin(), custoInsercao.end(), maisCaro);//quick sort
-        //ordenarEmOrdemCrescente(custoInsercao);//bubble sort
-
-        //printarCustoInsercao(custoInsercao);//debug
-        //scanf("%*c");//debug
 
         alpha = (double)(rand() % RAND_MAX + 1) / RAND_MAX;//numero aleatorio de 0 a 1
-        //cout << "Alpha: " << alpha << endl;//debug
 
         limite = (int)(alpha * custoInsercao.size());
         
@@ -196,24 +188,8 @@ Solucao Construcao(int& dimension, Data& data){//ok
             selecionado = rand() % limite;
         }
 
-        //cout << "Margem1: " << (int) ceil(alpha * custoInsercao.size()) << endl;//debug
-        //cout << "Margem2: " << ((int)(alpha * custoInsercao.size())) << endl;//debug
-        //cout << "Selecionado: " << selecionado+1 << endl;//debug
-
-        /*printarSequencia(s.sequencia);//debug
-        cout << "Quantidade de pares: " << custoInsercao.size() << endl;
-        cout << "Par selecionado: " << selecionado << endl;
-        cout << "No inserido: " << custoInsercao[selecionado].noInserido
-        << " | Aresta selecionada: " << custoInsercao[selecionado].arestaRemovida << endl;
-        */
-
         inserirNaSolucao(s, CL, custoInsercao[selecionado]);
-        //cout << "Cheguei aqui\n";
-        //cout << custoInsercao[selecionado].noInserido << " inserido\n";
     }
-    
-    //cout << "Final: ";
-    //printarSequencia(s.sequencia);//debug
 
     return s;
 }
@@ -230,16 +206,20 @@ bool bestImprovementSwap(Solucao& s, Data& data){
     double bestDelta = 0;
     int best_i, best_j, tamanhoS = s.sequencia.size() - 1;
 
-    for(int i = 1; i < tamanhoS; i++){
-        int vi = s.sequencia[i];
-        int vi_next = s.sequencia[i + 1];
-        int vi_prev = s.sequencia[i - 1];
+    int vi, vi_next, vi_prev, vj, vj_next, vj_prev;
+    double delta;
+    int i, j;
 
-        for(int j = i + 1; j < tamanhoS; j++){
-            int vj = s.sequencia[j];
-            int vj_next = s.sequencia[j + 1];
-            int vj_prev = s.sequencia[j - 1];
-            double delta;
+    for(i = 1; i < tamanhoS; i++){
+        vi = s.sequencia[i];
+        vi_next = s.sequencia[i + 1];
+        vi_prev = s.sequencia[i - 1];
+
+        for(j = i + 1; j < tamanhoS; j++){
+            vj = s.sequencia[j];
+            vj_next = s.sequencia[j + 1];
+            vj_prev = s.sequencia[j - 1];
+
             if(j-i == 1){
                 delta = -data.getDistance(vi_prev,vi) -data.getDistance(vj,vj_next)
                 + data.getDistance(vi_prev,vj) + data.getDistance(vi,vj_next);
@@ -268,11 +248,10 @@ bool bestImprovementSwap(Solucao& s, Data& data){
 
 void inverte(vector<int>& sequencia, int& i, int& j){
     vector<int> vi;
-    for(int x = j; x > i; x--){
+    int x;
+    for(x = j; x > i; x--){
         vi.push_back(sequencia[x]);
     }
-    //printarSequencia(vi);
-    //cout << "i = " << i << " j = " << j << endl;
 
     sequencia.erase(sequencia.begin() + i + 1, sequencia.begin() + j + 1);
     sequencia.insert(sequencia.begin() + i + 1, vi.begin(), vi.end());
@@ -282,17 +261,21 @@ bool bestImprovement2Opt(Solucao& s, Data& data){
     double bestDelta = 0;
     int best_i, best_j, tamanhoS = s.sequencia.size() - 1;
 
-    for(int i = 0; i < tamanhoS; i++){
-        int ai_prev = s.sequencia[i];
-        int ai_next = s.sequencia[i + 1];
+    int ai_prev, ai_next, aj_prev, aj_next;
+    double delta;
+    int i, j;
 
-        for(int j = i + 2; j < tamanhoS; j++){
+    for(i = 0; i < tamanhoS; i++){
+        ai_prev = s.sequencia[i];
+        ai_next = s.sequencia[i + 1];
+
+        for(j = i + 2; j < tamanhoS; j++){
             if(i == 0 && j == tamanhoS - 1){
                 continue;
             }
-            int aj_prev = s.sequencia[j];
-            int aj_next = s.sequencia[j + 1];
-            double delta = -data.getDistance(ai_prev,ai_next) -data.getDistance(aj_prev,aj_next)
+            aj_prev = s.sequencia[j];
+            aj_next = s.sequencia[j + 1];
+            delta = -data.getDistance(ai_prev,ai_next) -data.getDistance(aj_prev,aj_next)
             + data.getDistance(ai_prev,aj_prev) + data.getDistance(ai_next,aj_next);
 
             if (delta < bestDelta){
@@ -315,8 +298,6 @@ bool bestImprovement2Opt(Solucao& s, Data& data){
 void insercao(vector<int>& sequencia, int& i, int& j, int& n){
     vector<int> vi;
     vi.insert(vi.begin(), sequencia.begin() + i, sequencia.begin() + i + n);
-    //printarSequencia(vi);
-    //cout << "i = " << i << " j = " << j << endl;
 
     if(i < j){
         sequencia.insert(sequencia.begin() + j+1, vi.begin(), vi.end());
@@ -331,19 +312,24 @@ bool bestImprovementOrOpt(Solucao& s, Data& data, int n){
     double bestDelta = 0;
     int best_i, best_j, tamanhoS = s.sequencia.size() - n;
 
-    for(int i = 1; i < tamanhoS; i++){
-        int vi = s.sequencia[i];
-        int vi_fim = s.sequencia[i + n - 1];
-        int vi_next = s.sequencia[i + n];
-        int vi_prev = s.sequencia[i - 1];
+    int vi, vi_fim, vi_next, vi_prev;
+    int vj_next, vj_prev;
+    double delta;
+    int i, aj;
 
-        for(int aj = 0; aj < tamanhoS; aj++){
+    for(i = 1; i < tamanhoS; i++){
+        vi = s.sequencia[i];
+        vi_fim = s.sequencia[i + n - 1];
+        vi_next = s.sequencia[i + n];
+        vi_prev = s.sequencia[i - 1];
+
+        for(aj = 0; aj < tamanhoS; aj++){
             if(aj >= i-1 && aj <= i+n-1){
                 continue;
             }
-            int vj_next = s.sequencia[aj + 1];
-            int vj_prev = s.sequencia[aj];
-            double delta = -data.getDistance(vi_prev, vi) - data.getDistance(vi_fim, vi_next)
+            vj_next = s.sequencia[aj + 1];
+            vj_prev = s.sequencia[aj];
+            delta = -data.getDistance(vi_prev, vi) - data.getDistance(vi_fim, vi_next)
             + data.getDistance(vi_prev, vi_next) - data.getDistance(vj_prev, vj_next)
             + data.getDistance(vj_prev, vi) + data.getDistance(vi_fim, vj_next);
 
@@ -368,9 +354,10 @@ bool bestImprovementOrOpt(Solucao& s, Data& data, int n){
 void BuscaLocal(Solucao& s, Data& data){
     vector<int> NL = {1, 2, 3, 4, 5};
     bool improved = false;
+    int n;
 
     while (NL.empty() == false){
-        int n = rand() % NL.size();
+        n = rand() % NL.size();
         switch (NL[n]){
             case 1:
                 improved = bestImprovementSwap(s, data);
@@ -449,18 +436,15 @@ Solucao Perturbacao(Solucao s, Data& data, int dimension){
 Solucao ILS(int maxIter, int maxIterIls, int& dimension, Data& data){
     Solucao bestOfAll;
     bestOfAll.valorObj = INFINITY;
-    //int n = 14;//acho que pode tirar
 
-    double tempo = 0;
+    int iterIls = 0;
 
     for(int i = 0; i < maxIter; i++){
-        //cout << "Comecando uma nota iteracao\n";
-
         Solucao s = Construcao(dimension, data);
-        //printarSequencia(s.sequencia);//debug
+        
         Solucao best = s;
 
-        int iterIls = 0;
+        iterIls = 0;
 
         while(iterIls <= maxIterIls){
             BuscaLocal(s, data);
@@ -470,12 +454,6 @@ Solucao ILS(int maxIter, int maxIterIls, int& dimension, Data& data){
                 iterIls = 0;
             }
 
-            /*clock_t start = clock();
-            s = Perturbacao(best, data, dimension);
-            clock_t end = clock();
-
-            tempo += (double)(end - start) / (double)(CLOCKS_PER_SEC);
-            //printf("%.3lf %.2lf\n", tempo, s.valorObj);//tirei para debugar*/
             s = Perturbacao(best, data, dimension);
             
             iterIls++;
@@ -484,7 +462,6 @@ Solucao ILS(int maxIter, int maxIterIls, int& dimension, Data& data){
             bestOfAll = best;
         }
     }
-    //printf("%.3lf\n", tempo);//tirei para debugar
 
     return bestOfAll;
 }
@@ -497,7 +474,8 @@ int main(int argc, char** argv) {
     data.read();
     int n = data.getDimension();//quantidade de cidades
     int maxIter = 50, maxIterILS;
-    //int acaba = 200; //acho que pode tirar
+    clock_t start, end;
+    double tempo;
 
     if(n >= 150){
         maxIterILS = n/2;
@@ -506,12 +484,12 @@ int main(int argc, char** argv) {
     }
 
     for(int i = 0; i < 10; i++){
-        clock_t start = clock();
+        start = clock();
         Solucao s = ILS(maxIter, maxIterILS, n, data);
-        clock_t end = clock();
+        end = clock();
 
-        double tempo = (double)(end - start) / (double)(CLOCKS_PER_SEC);
-        printf("%.3lf %.2lf\n", tempo, s.valorObj);//tirei para debugar
+        tempo = (double)(end - start) / (double)(CLOCKS_PER_SEC);
+        printf("%.3lf %.2lf\n", tempo, s.valorObj);
     }
         
     return 0;
