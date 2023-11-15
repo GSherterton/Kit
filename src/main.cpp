@@ -467,7 +467,6 @@ Solucao ILS(int maxIter, int maxIterIls, int& dimension, Data& data){
 }
 
 int main(int argc, char** argv) {
-
     srand(time(NULL));
 
     auto data = Data(argc, argv[1]);
@@ -475,7 +474,7 @@ int main(int argc, char** argv) {
     int n = data.getDimension();//quantidade de cidades
     int maxIter = 50, maxIterILS;
     clock_t start, end;
-    double tempo;
+    double tempoTotal = 0, valorTotal = 0;
 
     if(n >= 150){
         maxIterILS = n/2;
@@ -488,9 +487,12 @@ int main(int argc, char** argv) {
         Solucao s = ILS(maxIter, maxIterILS, n, data);
         end = clock();
 
-        tempo = (double)(end - start) / (double)(CLOCKS_PER_SEC);
-        printf("%.3lf %.2lf\n", tempo, s.valorObj);
+        tempoTotal += (double)(end - start) / (double)(CLOCKS_PER_SEC);
+        valorTotal += s.valorObj;
     }
+
+    cout << tempoTotal/10 << " " << valorTotal/10 << endl;
+    //printf("%.3lf %.2lf\n", tempoTotal/10, valorTotal/10);
         
     return 0;
 }
