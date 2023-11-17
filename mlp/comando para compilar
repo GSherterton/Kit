@@ -1,0 +1,4 @@
+g++ -m32 -O3 -fPIC -fexceptions -DNDEBUG -DIL_STD -std=c++0x src/*.cpp -o tsp
+
+//mudar o nome da  instancia
+.\"tsp.exe" ./instances/burma14.tsp 
