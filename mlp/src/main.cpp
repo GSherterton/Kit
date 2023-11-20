@@ -92,8 +92,21 @@ void printarCustoInsercao(vector<InsertionInfo>& custoInsercao){
     }
 }
 
+void calcularCustoAcumulado(Solucao& s, Data& data){
+    size_t tamanhoS = s.sequencia.size() - 1;
+    s.valorObj = 0;
+    double aux = 0;
+
+    for(int i = 0; i < tamanhoS; i++){
+        aux += data.getDistance(s.sequencia[i], s.sequencia[i+1]);
+        s.valorObj += aux;
+    }
+}
+
 void calcularValorObj(Solucao& s, Data& data){
     size_t tamanhoS = s.sequencia.size() - 1;
+    s.valorObj = 0;
+
     for(int i = 0; i < tamanhoS; i++){
         s.valorObj += data.getDistance(s.sequencia[i], s.sequencia[i+1]);
     }
@@ -471,15 +484,15 @@ int main(int argc, char** argv) {
 
     auto data = Data(argc, argv[1]);
     data.read();
-    int n = data.getDimension();//quantidade de cidades
-    int maxIter = 50, maxIterILS;
+    int dimension = data.getDimension();//quantidade de cidades
+    /*int maxIter = 50, maxIterILS;
     clock_t start, end;
     double tempoTotal = 0, valorTotal = 0;
 
     if(n >= 150){
-        maxIterILS = n/2;
+        maxIterILS = dimension/2;
     }else{
-        maxIterILS = n;
+        maxIterILS = dimension;
     }
 
     for(int i = 0; i < 10; i++){
@@ -493,6 +506,48 @@ int main(int argc, char** argv) {
 
     cout << tempoTotal/10 << " " << valorTotal/10 << endl;
     //printf("%.3lf %.2lf\n", tempoTotal/10, valorTotal/10);
-        
+    */
+
+    Solucao s;
+
+    for(int i = 1; i <= 6; i++){
+        s.sequencia.push_back(i);
+    }
+    s.sequencia.push_back(1);
+    calcularCustoAcumulado(s, data);
+
+    printarSequencia(s.sequencia);
+    printf("%.2lf\n\n", s.valorObj);
+    //cout << s.valorObj << endl;
+
+    Solucao s1, s2;
+
+    for(int i = 1; i <= 4; i++){
+        s1.sequencia.push_back(i);
+    }
+    for(int i = 5; i <= 6; i++){
+        s2.sequencia.push_back(i);
+    }
+    s2.sequencia.push_back(1);
+    calcularCustoAcumulado(s1, data);
+    calcularCustoAcumulado(s2, data);
+
+    double delta = 0;
+
+    int i;
+    for(i = 0; i < 3; i++){
+        delta += data.getDistance(s1.sequencia[i], s1.sequencia[i+1]);
+    }
+    delta += data.getDistance(s1.sequencia[i], s2.sequencia[0]);
+
+    printarSequencia(s1.sequencia);
+    printarSequencia(s2.sequencia);
+    printf("Delta: %.2lf | tamanho2: %d\n", delta, s2.sequencia.size());
+    printf("%.2lf\n\n", (s1.valorObj + s2.valorObj + (delta * s2.sequencia.size())));
+
+    for(int j = 0; j < 6; j++){
+        printf("%d - %d : %.2lf%s", s.sequencia[j], s.sequencia[j+1], data.getDistance(s.sequencia[j], s.sequencia[j+1]), j == 5 ? "\n" : " | ");
+    }
+
     return 0;
 }
