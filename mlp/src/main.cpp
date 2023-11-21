@@ -23,6 +23,62 @@ struct InsertionInfo{
     double custo; // delta ao inserir k na aresta {i,j}
 };
 
+struct Subsequencia{
+    double T, C;
+    int W;
+    int first, last; //primeiro e ultimo nos da subsequencia
+    inline static Subsequencia Concatenate(Subsequencia& sigma1, Subsequencia& sigma2, Data& data){
+        Subsequencia sigma;
+        double temp = data.getDistance(sigma1.last, sigma2.first);
+        sigma.W = sigma1.W + sigma2.W;
+        sigma.T = sigma1.T + temp + sigma2.T;
+        sigma.C = sigma1.C + sigma2.W * (sigma1.T + temp) + sigma2.C;
+        sigma.first = sigma1.first;
+        sigma.last = sigma2.last;
+
+        return sigma;
+    }
+};
+
+void UpdateAllSubseq(Solucao& s, vector<vector<Subsequencia>>& subseqMatrix, Data& data){
+    int n = s.sequencia.size();
+
+    //subsequencias de um unico no
+    for(int i = 0; i < n; i++){
+        int v = s.sequencia[i];
+        subseqMatrix[i][i].W = (i > 0);
+        subseqMatrix[i][i].C = 0;
+        subseqMatrix[i][i].T = 0;
+        subseqMatrix[i][i].first = s.sequencia[i];
+        subseqMatrix[i][i].last = s.sequencia[i];
+    }
+    
+    /*//teste
+    subseqMatrix[0][1] = Subsequencia::Concatenate(subseqMatrix[0][0], subseqMatrix[1][1], data);*/
+
+    for(int i = 0; i < n; i++){
+        for(int j = i + 1; j < n; j++){
+            //cout << "Entrei aqui\n";
+            subseqMatrix[i][j] = Subsequencia::Concatenate(subseqMatrix[i][j-1], subseqMatrix[j][j], data);
+            //cout << "Concatenei uma subsequencia\n";
+        }
+    }
+
+    /*//subsequencias invertidas
+    //(necessarias para o 2-opt)
+    for(int i = n - 1; i >= 0; i--){
+        for(int j = i - 1; j >= 0; j--){
+            subseqMatrix[i][j] = Subsequencia::Concatenate(subseqMatrix[i][j+1], subseqMatrix[j][j], data);
+        }
+    }*/
+}
+
+void mostrarSubsequencia(Subsequencia& subsequencia){
+    cout << "Tempo Total: " << subsequencia.T << endl;
+    cout << "Custo Acumulado: " << subsequencia.C << endl;
+    cout << "Custo de Atraso: " << subsequencia.W << endl;
+}
+
 vector<int> escolher4NosAleatorios(int& tamanho){
     vector<int> s(5);//mudando a inicializacao
     int num[4];
@@ -508,46 +564,69 @@ int main(int argc, char** argv) {
     //printf("%.3lf %.2lf\n", tempoTotal/10, valorTotal/10);
     */
 
+    int i;
     Solucao s;
 
-    for(int i = 1; i <= 6; i++){
+    for(i = 1; i <= 4; i++){
         s.sequencia.push_back(i);
     }
     s.sequencia.push_back(1);
+    calcularValorObj(s, data);
+    double custo = s.valorObj;
     calcularCustoAcumulado(s, data);
+    
 
     printarSequencia(s.sequencia);
-    printf("%.2lf\n\n", s.valorObj);
+    printf("Custo Acumulado: %.2lf\nTempo Total: %.2lf\n\n", s.valorObj, custo);
     //cout << s.valorObj << endl;
 
-    Solucao s1, s2;
+    vector<vector<Subsequencia>> subseqMatrix(5, vector<Subsequencia>(5));
 
-    for(int i = 1; i <= 4; i++){
-        s1.sequencia.push_back(i);
+    UpdateAllSubseq(s, subseqMatrix, data);
+
+    int a = 0, b = 0;
+    while(1){//procurando por indice comecando em 1
+        cout << "Digite o indice inicial da subsequencia: ";
+        cin >> a;
+
+        if(a == 0){
+            break;
+        }
+
+        cout << "Digite o indice final da subsequencia: ";
+        cin >> b;
+
+        mostrarSubsequencia(subseqMatrix[a-1][b-1]);
     }
-    for(int i = 5; i <= 6; i++){
-        s2.sequencia.push_back(i);
-    }
-    s2.sequencia.push_back(1);
-    calcularCustoAcumulado(s1, data);
-    calcularCustoAcumulado(s2, data);
 
-    double delta = 0;
-
-    int i;
-    for(i = 0; i < 3; i++){
-        delta += data.getDistance(s1.sequencia[i], s1.sequencia[i+1]);
-    }
-    delta += data.getDistance(s1.sequencia[i], s2.sequencia[0]);
-
-    printarSequencia(s1.sequencia);
-    printarSequencia(s2.sequencia);
-    printf("Delta: %.2lf | tamanho2: %d\n", delta, s2.sequencia.size());
-    printf("%.2lf\n\n", (s1.valorObj + s2.valorObj + (delta * s2.sequencia.size())));
-
-    for(int j = 0; j < 6; j++){
-        printf("%d - %d : %.2lf%s", s.sequencia[j], s.sequencia[j+1], data.getDistance(s.sequencia[j], s.sequencia[j+1]), j == 5 ? "\n" : " | ");
-    }
+    /*for(i = 0; i < 4; i++){
+        printf("%d - %d: %.2lf%s", s.sequencia[i], s.sequencia[i+1], data.getDistance(s.sequencia[i], s.sequencia[i+1]), (i == 3 ? "\n" : " | "));
+    }*/
 
     return 0;
 }
+
+/*Solucao s1, s2;
+
+for(i = 1; i <= 21; i++){
+    s1.sequencia.push_back(i);
+}
+for(i = 22; i <= dimension; i++){
+    s2.sequencia.push_back(i);
+}
+
+s2.sequencia.push_back(1);
+calcularCustoAcumulado(s1, data);
+calcularCustoAcumulado(s2, data);
+
+printarSequencia(s1.sequencia);
+printarSequencia(s2.sequencia);
+
+double delta = 0;
+
+for(i = 0; i < s1.sequencia.size()-1; i++){
+    delta += data.getDistance(s1.sequencia[i], s1.sequencia[i+1]);
+}
+delta += data.getDistance(s1.sequencia[i], s2.sequencia[0]);
+
+printf("%.2lf\n\n", (s1.valorObj + s2.valorObj + (delta * s2.sequencia.size())));*/
