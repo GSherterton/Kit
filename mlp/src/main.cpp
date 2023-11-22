@@ -185,13 +185,13 @@ void troca(int& a, int& b){
     b = aux;
 }
 
-int partition(vector<int>& CL, int inicio, int fim){//fim e inicio sao indices
-    int pivo = CL[fim];
+int partition(vector<int>& CL, int inicio, int fim, int noAvaliado, Data& data){//fim e inicio sao indices
+    int pivo = data.getDistance(CL[fim], noAvaliado);
     int i = inicio;
     int j; 
 
     for(j = inicio; j < fim; j++){
-        if(CL[j] <= pivo){
+        if(data.getDistance(CL[j], noAvaliado) <= pivo){
             troca(CL[j], CL[i]);
             i++;
         }
@@ -205,9 +205,9 @@ void quickSort(vector<int>& CL, int inicio, int fim, int noAvaliado, Data& data)
     int pivo;
 
     if(inicio < fim){
-        pivo = partition(CL, inicio, fim);
-        quickSort(CL, inicio, pivo-1, 0, data);
-        quickSort(CL, pivo+1, fim, 0, data);
+        pivo = partition(CL, inicio, fim, noAvaliado, data);
+        quickSort(CL, inicio, pivo-1, noAvaliado, data);
+        quickSort(CL, pivo+1, fim, noAvaliado, data);
     }
 }
 
@@ -215,14 +215,15 @@ bool maisLonge(int no1, int no2, int noAvaliado, Data& data){
     return (data.getDistance(no1, noAvaliado) < data.getDistance(no2, noAvaliado));
 }
 
-void inserirNaSolucao(Solucao& s, vector<int>& CL, InsertionInfo& custoInsercao){
+void inserirNaSolucao(Solucao& s, vector<int>& CL, int& noInserido){
     //inserir na solucao s
-    s.sequencia.insert(s.sequencia.begin() + custoInsercao.arestaRemovida + 1, custoInsercao.noInserido);
-    s.valorObj += custoInsercao.custo;
+    s.sequencia.push_back(noInserido);
+    
+    //tirei a atualizacao do custo da sequencia s devido talvez n ser mais importante;
     //tirar o no de CL
     auto fim = CL.end();
     for(auto it = CL.begin(); it != fim; it++){
-        if(*it == custoInsercao.noInserido){
+        if(*it == noInserido){
             CL.erase(it);    
             break;
         }
@@ -246,16 +247,15 @@ Solucao Construcao(int& dimension, Data& data){
     int selecionado, limite, noAvaliado;
     double alpha;
 
-    while(!CL.empty()){//parei aqui
-        //noAvaliado = 
-        /*sort(CL.begin(), CL.end(), [](int no1, int no2, int noAvaliado){
-            return (data.getDistance(no1, noAvaliado) < data.getDistance(no2, noAvaliado))});//quick sort*/
+    while(!CL.empty()){
+        noAvaliado = s.sequencia[s.sequencia.size()-1];
 
         quickSort(CL, 0, CL.size()-1, noAvaliado, data);
 
         alpha = (double)(rand() % RAND_MAX + 1) / RAND_MAX;//numero aleatorio de 0 a 1
+        alpha /= 4;
 
-        //limite = (int)(alpha * custoInsercao.size());
+        limite = (int)(alpha * CL.size());
         
         if(limite == 0){
             selecionado = 0;
@@ -263,7 +263,7 @@ Solucao Construcao(int& dimension, Data& data){
             selecionado = rand() % limite;
         }
 
-        //inserirNaSolucao(s, CL, custoInsercao[selecionado]);
+        inserirNaSolucao(s, CL, CL[selecionado]);
     }
 
     s.sequencia.push_back(s.sequencia[0]);//fechar o ciclo
@@ -572,15 +572,7 @@ int main(int argc, char** argv) {
     //printf("%.3lf %.2lf\n", tempoTotal/10, valorTotal/10);
     */
 
-    vector<int> vec{4,5,1,3,8,9,2,7,6};
-
-    printarSequencia(vec);
-
-    quickSort(vec, 0, vec.size()-1, 0, data);
-    
-    printarSequencia(vec);
-
-    /*int i;
+    int i;
     Solucao s = Construcao(dimension, data);
 
     calcularValorObj(s, data);
@@ -592,7 +584,7 @@ int main(int argc, char** argv) {
     printf("Custo Acumulado: %.2lf\nTempo Total: %.2lf\n\n", s.valorObj, custo);
     //cout << s.valorObj << endl;
 
-    vector<vector<Subsequencia>> subseqMatrix(5, vector<Subsequencia>(5));
+    vector<vector<Subsequencia>> subseqMatrix(s.sequencia.size(), vector<Subsequencia>(s.sequencia.size()));
 
     UpdateAllSubseq(s, subseqMatrix, data);
 
