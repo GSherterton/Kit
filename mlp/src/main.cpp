@@ -64,13 +64,13 @@ void UpdateAllSubseq(Solucao& s, vector<vector<Subsequencia>>& subseqMatrix, Dat
         }
     }
 
-    /*//subsequencias invertidas
+    //subsequencias invertidas
     //(necessarias para o 2-opt)
     for(int i = n - 1; i >= 0; i--){
         for(int j = i - 1; j >= 0; j--){
             subseqMatrix[i][j] = Subsequencia::Concatenate(subseqMatrix[i][j+1], subseqMatrix[j][j], data);
         }
-    }*/
+    }
 }
 
 void mostrarSubsequencia(Subsequencia& subsequencia){
@@ -79,53 +79,20 @@ void mostrarSubsequencia(Subsequencia& subsequencia){
     cout << "Custo de Atraso: " << subsequencia.W << endl;
 }
 
-vector<int> escolher4NosAleatorios(int& tamanho){
-    vector<int> s(5);//mudando a inicializacao
-    int num[4];
-    bool achou;
-    
-    //srand(time(NULL));
-    
-    for(int i = 0; i < 4; i++){
-        num[i] = rand() % tamanho + 1;
-        
-        achou = 1;
-        while(achou){
-            achou = 0;
-            
-            for(int j = 0; j < i; j++){
-                if(num[i] == num[j]){
-                    num[i] = rand() % tamanho + 1;    
-                    achou = 1;
-                    break;
-                }
-            }
-        }
-    }
-    
-    s[0] = num[0];
-    s[1] = num[1];
-    s[2] = num[2];
-    s[3] = num[3];
-    s[4] = num[0];
+vector<int> escolher1NoAleatorio(int& tamanho){
+    vector<int> s(1);
 
-    /*
-    s.push_back(num[0]);
-    s.push_back(num[1]);
-    s.push_back(num[2]);
-    s.push_back(num[3]);
-    s.push_back(num[0]);
-    */
+    s[0] =  rand() % tamanho + 1;
 
     return s;
 }
 
 vector<int> nosRestantes(vector<int>& sequencia, int& tamanho){//fiz especificamente para 4 membros
-    vector<int> CL(tamanho - (sequencia.size() - 1));//mudei a inicializacao
+    vector<int> CL(tamanho - 1);//mudei a inicializacao
     int cont = 0;
 
     for(int i = 1; i <= tamanho; i++){
-        if((i != sequencia[0]) && (i != sequencia[1]) && (i != sequencia[2]) && (i != sequencia[3])){
+        if(i != sequencia[0]){
             CL[cont++] = i;
         }
     }
@@ -188,7 +155,7 @@ vector<InsertionInfo> calcularCustoInsercao(Solucao& s, vector<int>& CL, Data& d
     return custoInsercao;
 }
 
-void ordenarEmOrdemCrescente(vector<InsertionInfo>& custoInsercao){
+void ordenarEmOrdemCrescente(vector<InsertionInfo>& custoInsercao){//bubble sort
     bool trocou = 1;
     int tamanhoCusto = custoInsercao.size() - 1;
     InsertionInfo aux;
@@ -210,8 +177,42 @@ void ordenarEmOrdemCrescente(vector<InsertionInfo>& custoInsercao){
     return;
 }
 
-bool maisCaro(InsertionInfo custo1, InsertionInfo custo2){
-    return (custo1.custo < custo2.custo);
+void troca(int& a, int& b){
+    int aux;
+
+    aux = a;
+    a = b;
+    b = aux;
+}
+
+int partition(vector<int>& CL, int inicio, int fim){//fim e inicio sao indices
+    int pivo = CL[fim];
+    int i = inicio;
+    int j; 
+
+    for(j = inicio; j < fim; j++){
+        if(CL[j] <= pivo){
+            troca(CL[j], CL[i]);
+            i++;
+        }
+    }
+    troca(CL[j], CL[i]);
+
+    return i;
+}
+
+void quickSort(vector<int>& CL, int inicio, int fim, int noAvaliado, Data& data){
+    int pivo;
+
+    if(inicio < fim){
+        pivo = partition(CL, inicio, fim);
+        quickSort(CL, inicio, pivo-1, 0, data);
+        quickSort(CL, pivo+1, fim, 0, data);
+    }
+}
+
+bool maisLonge(int no1, int no2, int noAvaliado, Data& data){
+    return (data.getDistance(no1, noAvaliado) < data.getDistance(no2, noAvaliado));
 }
 
 void inserirNaSolucao(Solucao& s, vector<int>& CL, InsertionInfo& custoInsercao){
@@ -233,23 +234,28 @@ Solucao Construcao(int& dimension, Data& data){
     Solucao s = {{}, 0.0};
 
 
-    s.sequencia = escolher4NosAleatorios(dimension);
+    s.sequencia = escolher1NoAleatorio(dimension);
     
-    calcularValorObj(s, data);
+    //calcularValorObj(s, data);
 
     vector<int> CL = nosRestantes(s.sequencia, dimension);
 
-    int selecionado, limite;
+    //printarSequencia(s.sequencia);
+    //printarSequencia(CL);
+
+    int selecionado, limite, noAvaliado;
     double alpha;
 
-    while(!CL.empty()){
-        vector<InsertionInfo> custoInsercao = calcularCustoInsercao(s, CL, data);
+    while(!CL.empty()){//parei aqui
+        //noAvaliado = 
+        /*sort(CL.begin(), CL.end(), [](int no1, int no2, int noAvaliado){
+            return (data.getDistance(no1, noAvaliado) < data.getDistance(no2, noAvaliado))});//quick sort*/
 
-        sort(custoInsercao.begin(), custoInsercao.end(), maisCaro);//quick sort
+        quickSort(CL, 0, CL.size()-1, noAvaliado, data);
 
         alpha = (double)(rand() % RAND_MAX + 1) / RAND_MAX;//numero aleatorio de 0 a 1
 
-        limite = (int)(alpha * custoInsercao.size());
+        //limite = (int)(alpha * custoInsercao.size());
         
         if(limite == 0){
             selecionado = 0;
@@ -257,8 +263,10 @@ Solucao Construcao(int& dimension, Data& data){
             selecionado = rand() % limite;
         }
 
-        inserirNaSolucao(s, CL, custoInsercao[selecionado]);
+        //inserirNaSolucao(s, CL, custoInsercao[selecionado]);
     }
+
+    s.sequencia.push_back(s.sequencia[0]);//fechar o ciclo
 
     return s;
 }
@@ -564,13 +572,17 @@ int main(int argc, char** argv) {
     //printf("%.3lf %.2lf\n", tempoTotal/10, valorTotal/10);
     */
 
-    int i;
-    Solucao s;
+    vector<int> vec{4,5,1,3,8,9,2,7,6};
 
-    for(i = 1; i <= 4; i++){
-        s.sequencia.push_back(i);
-    }
-    s.sequencia.push_back(1);
+    printarSequencia(vec);
+
+    quickSort(vec, 0, vec.size()-1, 0, data);
+    
+    printarSequencia(vec);
+
+    /*int i;
+    Solucao s = Construcao(dimension, data);
+
     calcularValorObj(s, data);
     double custo = s.valorObj;
     calcularCustoAcumulado(s, data);
