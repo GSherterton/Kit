@@ -461,7 +461,7 @@ void BuscaLocal(Solucao& s, Data& data){
     }
 }
 
-Solucao Perturbacao(Solucao s, Data& data, int dimension){
+Solucao Perturbacao(Solucao s, vector<vector<Subsequencia>>& subseqMatrix, Data& data, int dimension){
     int tamanho1 = 1, tamanho2 = 1, i = 0, j = 0;
 
     while(1){
@@ -473,7 +473,7 @@ Solucao Perturbacao(Solucao s, Data& data, int dimension){
         i = rand() % (dimension-2) + 1;
         j = rand() % (dimension-2) + 1; 
     }
-    
+
     int vi = s.sequencia[i];
     int vi_fim = s.sequencia[i+tamanho1-1];
     int vi_next = s.sequencia[i+tamanho1];
@@ -484,28 +484,50 @@ Solucao Perturbacao(Solucao s, Data& data, int dimension){
     int vj_next = s.sequencia[j+tamanho2];
     int vj_prev = s.sequencia[j-1];
 
-    if(j - (i+tamanho1-1) == 1){
-        s.valorObj += - data.getDistance(vi_prev, vi) - data.getDistance(vj_prev, vj) - data.getDistance(vj_fim, vj_next)
-                      + data.getDistance(vi_prev, vj) + data.getDistance(vj_fim, vi) + data.getDistance(vi_fim, vj_next);
-    }else if(i - (j+tamanho2-1) == 1){
-        s.valorObj += - data.getDistance(vi_prev, vi) - data.getDistance(vj_prev, vj) - data.getDistance(vi_fim, vi_next)
-                      + data.getDistance(vj_prev, vi) + data.getDistance(vi_fim, vj) + data.getDistance(vj_fim, vi_next);
-    }else{
-        s.valorObj += - data.getDistance(vi_prev, vi) - data.getDistance(vi_fim, vi_next) - data.getDistance(vj_prev, vj) - data.getDistance(vj_fim, vj_next)
-                      + data.getDistance(vi_prev, vj) + data.getDistance(vj_fim, vi_next) + data.getDistance(vj_prev, vi) + data.getDistance(vi_fim, vj_next); 
-    }
+    Subsequencia subAux, sub1;
 
     if(i < j){
+        subAux = subseqMatrix[0][i-1];
+        sub1 = subseqMatrix[j][j+tamanho2-1];
+        subAux = Subsequencia::Concatenate(subAux, sub1, data);
+
+        if(j - (i+tamanho1-1) != 1){//elas nao estao coladas
+            sub1 = subseqMatrix[i+tamanho1][j-1];
+            subAux = Subsequencia::Concatenate(subAux, sub1, data);
+        }
+
+        sub1 = subseqMatrix[i][i+tamanho1-1];
+        subAux = Subsequencia::Concatenate(subAux, sub1, data);
+        sub1 = subseqMatrix[j+tamanho2][dimension];
+        subAux = Subsequencia::Concatenate(subAux, sub1, data);
+        
+
         s.sequencia.insert(s.sequencia.begin() + j, s.sequencia.begin() + i, s.sequencia.begin() + i+tamanho1);//coloco no j
         s.sequencia.erase(s.sequencia.begin() + i, s.sequencia.begin() + i+tamanho1);//apago o i
         s.sequencia.insert(s.sequencia.begin() + i, s.sequencia.begin() + j+tamanho2, s.sequencia.begin() + j+tamanho2+tamanho2);//coloco no i//n sei explicar o pq do tamanho2 ai
         s.sequencia.erase(s.sequencia.begin() + j+tamanho2, s.sequencia.begin() + j+tamanho2+tamanho2);//apago no j
     }else if(i > j){
+        subAux = subseqMatrix[0][j-1];
+        sub1 = subseqMatrix[i][i+tamanho1-1];
+        subAux = Subsequencia::Concatenate(subAux, sub1, data);
+
+        if(i - (j+tamanho2-1) != 1){//elas nao estao coladas
+            sub1 = subseqMatrix[j+tamanho2][i-1];
+            subAux = Subsequencia::Concatenate(subAux, sub1, data);
+        }
+
+        sub1 = subseqMatrix[j][j+tamanho2-1];
+        subAux = Subsequencia::Concatenate(subAux, sub1, data);
+        sub1 = subseqMatrix[i+tamanho1][dimension];
+        subAux = Subsequencia::Concatenate(subAux, sub1, data);
+        
         s.sequencia.insert(s.sequencia.begin() + i, s.sequencia.begin() + j, s.sequencia.begin() + j+tamanho2);
         s.sequencia.erase(s.sequencia.begin() + j, s.sequencia.begin() + j+tamanho2);
         s.sequencia.insert(s.sequencia.begin() + j, s.sequencia.begin() + i+tamanho1, s.sequencia.begin() + i+tamanho1+tamanho1);
         s.sequencia.erase(s.sequencia.begin() + i+tamanho1, s.sequencia.begin() + i+tamanho1+tamanho1);
     } 
+
+    s.valorObj = subAux.C;
 
     return s;
 }
@@ -517,22 +539,36 @@ Solucao ILS(int maxIter, int maxIterIls, int& dimension, Data& data){
     int iterIls = 0;
 
     for(int i = 0; i < maxIter; i++){
-        Solucao s = Construcao(dimension, data);
-        
+        Solucao s = Construcao(dimension, data);//crei uma solucao inicial e defini o custo acumulado dela
+        calcularCustoAcumulado(s, data);
+
+        vector<vector<Subsequencia>> subseqMatrix(s.sequencia.size(), vector<Subsequencia>(s.sequencia.size()));
+
+        UpdateAllSubseq(s, subseqMatrix, data);
+
+        printarSequencia(s.sequencia);
+        cout << s.valorObj << endl << endl;
+
         Solucao best = s;
 
         iterIls = 0;
 
         while(iterIls <= maxIterIls){
-            BuscaLocal(s, data);
+            /*BuscaLocal(s, data);
 
             if(s.valorObj < best.valorObj){
                 best = s;
                 iterIls = 0;
-            }
+            }*/
 
-            s = Perturbacao(best, data, dimension);
-            
+            s = Perturbacao(best, subseqMatrix, data, dimension);
+
+            /*printarSequencia(s.sequencia);
+            cout << s.valorObj << endl;
+            calcularCustoAcumulado(s, data);
+            cout << s.valorObj << endl << endl;
+
+            scanf("%*c");*/
             iterIls++;
         }
         if (best.valorObj < bestOfAll.valorObj){
@@ -549,19 +585,19 @@ int main(int argc, char** argv) {
     auto data = Data(argc, argv[1]);
     data.read();
     int dimension = data.getDimension();//quantidade de cidades
-    /*int maxIter = 50, maxIterILS;
+    int maxIter = 10, maxIterILS;
     clock_t start, end;
     double tempoTotal = 0, valorTotal = 0;
 
-    if(n >= 150){
-        maxIterILS = dimension/2;
+    if(dimension >= 100){
+        maxIterILS = 100;
     }else{
         maxIterILS = dimension;
     }
 
     for(int i = 0; i < 10; i++){
         start = clock();
-        Solucao s = ILS(maxIter, maxIterILS, n, data);
+        Solucao s = ILS(maxIter, maxIterILS, dimension, data);
         end = clock();
 
         tempoTotal += (double)(end - start) / (double)(CLOCKS_PER_SEC);
@@ -570,9 +606,12 @@ int main(int argc, char** argv) {
 
     cout << tempoTotal/10 << " " << valorTotal/10 << endl;
     //printf("%.3lf %.2lf\n", tempoTotal/10, valorTotal/10);
-    */
+    
 
-    int i;
+    return 0;
+}
+
+/*int i;
     Solucao s = Construcao(dimension, data);
 
     calcularValorObj(s, data);
@@ -607,8 +646,9 @@ int main(int argc, char** argv) {
         printf("%d - %d: %.2lf%s", s.sequencia[i], s.sequencia[i+1], data.getDistance(s.sequencia[i], s.sequencia[i+1]), (i == 3 ? "\n" : " | "));
     }*/
 
-    return 0;
-}
+
+//----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
 
 /*Solucao s1, s2;
 
