@@ -279,44 +279,42 @@ void troca(vector<int>& sequencia, int& i, int& j){
     sequencia[j] = aux;
 }
 
-bool bestImprovementSwap(Solucao& s, Data& data){
-    double bestDelta = 0;
+bool bestImprovementSwap(Solucao& s, vector<vector<Subsequencia>>& subseqMatrix, Data& data){
+    double bestValorObj = INFINITY;
     int best_i, best_j, tamanhoS = s.sequencia.size() - 1;
 
-    int vi, vi_next, vi_prev, vj, vj_next, vj_prev;
-    double delta;
     int i, j;
 
+    Subsequencia subAux, sub1;
+
     for(i = 1; i < tamanhoS; i++){
-        vi = s.sequencia[i];
-        vi_next = s.sequencia[i + 1];
-        vi_prev = s.sequencia[i - 1];
-
         for(j = i + 1; j < tamanhoS; j++){
-            vj = s.sequencia[j];
-            vj_next = s.sequencia[j + 1];
-            vj_prev = s.sequencia[j - 1];
+            subAux = subseqMatrix[0][i-1];
+            sub1 = subseqMatrix[j][j];
+            subAux = Subsequencia::Concatenate(subAux, sub1, data);
 
-            if(j-i == 1){
-                delta = -data.getDistance(vi_prev,vi) -data.getDistance(vj,vj_next)
-                + data.getDistance(vi_prev,vj) + data.getDistance(vi,vj_next);
-            }else{
-                delta = -data.getDistance(vi_prev,vi) -data.getDistance(vi,vi_next) + data.getDistance(vi_prev,vj)
-                + data.getDistance(vj,vi_next) - data.getDistance(vj_prev,vj) - data.getDistance(vj,vj_next)
-                + data.getDistance(vj_prev,vi) + data.getDistance(vi,vj_next);
+            if((j - i) != 1){//elas nao estao coladas
+                sub1 = subseqMatrix[i+1][j-1];
+                subAux = Subsequencia::Concatenate(subAux, sub1, data);
             }
 
-            if (delta < bestDelta){
-                bestDelta = delta;
+            sub1 = subseqMatrix[i][i];
+            subAux = Subsequencia::Concatenate(subAux, sub1, data);
+            sub1 = subseqMatrix[j+1][tamanhoS];
+            subAux = Subsequencia::Concatenate(subAux, sub1, data); 
+
+            if (subAux.C < bestValorObj){
+                bestValorObj = subAux.C;
                 best_i = i;
                 best_j = j;
             }
         }
     }
 
-    if(bestDelta < 0){
+    if(bestValorObj < s.valorObj){
         troca(s.sequencia, best_i, best_j);
-        s.valorObj += bestDelta;
+        s.valorObj = bestValorObj;
+        UpdateAllSubseq(s, subseqMatrix, data);
         return true;
     }
 
@@ -334,38 +332,38 @@ void inverte(vector<int>& sequencia, int& i, int& j){
     sequencia.insert(sequencia.begin() + i + 1, vi.begin(), vi.end());
 }
 
-bool bestImprovement2Opt(Solucao& s, Data& data){
-    double bestDelta = 0;
+bool bestImprovement2Opt(Solucao& s, vector<vector<Subsequencia>>& subseqMatrix, Data& data){
+    double bestValorObj = INFINITY;
     int best_i, best_j, tamanhoS = s.sequencia.size() - 1;
 
-    int ai_prev, ai_next, aj_prev, aj_next;
-    double delta;
     int i, j;
 
-    for(i = 0; i < tamanhoS; i++){
-        ai_prev = s.sequencia[i];
-        ai_next = s.sequencia[i + 1];
+    Subsequencia subAux, sub1;
 
+    for(i = 0; i < tamanhoS; i++){
         for(j = i + 2; j < tamanhoS; j++){
             if(i == 0 && j == tamanhoS - 1){
                 continue;
             }
-            aj_prev = s.sequencia[j];
-            aj_next = s.sequencia[j + 1];
-            delta = -data.getDistance(ai_prev,ai_next) -data.getDistance(aj_prev,aj_next)
-            + data.getDistance(ai_prev,aj_prev) + data.getDistance(ai_next,aj_next);
+            
+            subAux = subseqMatrix[0][i];
+            sub1 = subseqMatrix[j][i+1];
+            subAux = Subsequencia::Concatenate(subAux, sub1, data);
+            sub1 = subseqMatrix[j+1][tamanhoS];
+            subAux = Subsequencia::Concatenate(subAux, sub1, data);
 
-            if (delta < bestDelta){
-                bestDelta = delta;
+            if (subAux.C < bestValorObj){
+                bestValorObj = subAux.C;
                 best_i = i;
                 best_j = j;
             }
         }
     }
 
-    if(bestDelta < 0){
+    if(bestValorObj < s.valorObj){
         inverte(s.sequencia, best_i, best_j);
-        s.valorObj += bestDelta;
+        s.valorObj = bestValorObj;
+        UpdateAllSubseq(s, subseqMatrix, data);
         return true;
     }
 
@@ -385,42 +383,79 @@ void insercao(vector<int>& sequencia, int& i, int& j, int& n){
     }
 }
 
-bool bestImprovementOrOpt(Solucao& s, Data& data, int n){
-    double bestDelta = 0;
+bool bestImprovementOrOpt(Solucao& s, vector<vector<Subsequencia>>& subseqMatrix, Data& data, int n){
+    double bestValorObj = INFINITY;
     int best_i, best_j, tamanhoS = s.sequencia.size() - n;
 
-    int vi, vi_fim, vi_next, vi_prev;
-    int vj_next, vj_prev;
-    double delta;
     int i, aj;
 
-    for(i = 1; i < tamanhoS; i++){
-        vi = s.sequencia[i];
-        vi_fim = s.sequencia[i + n - 1];
-        vi_next = s.sequencia[i + n];
-        vi_prev = s.sequencia[i - 1];
+    Subsequencia subAux, sub1;
 
+    for(i = 1; i < tamanhoS; i++){
         for(aj = 0; aj < tamanhoS; aj++){
             if(aj >= i-1 && aj <= i+n-1){
                 continue;
             }
-            vj_next = s.sequencia[aj + 1];
-            vj_prev = s.sequencia[aj];
-            delta = -data.getDistance(vi_prev, vi) - data.getDistance(vi_fim, vi_next)
-            + data.getDistance(vi_prev, vi_next) - data.getDistance(vj_prev, vj_next)
-            + data.getDistance(vj_prev, vi) + data.getDistance(vi_fim, vj_next);
-
-            if(delta < bestDelta){
-                bestDelta = delta;
+            
+            if(i < aj){
+                subAux = subseqMatrix[0][i-1];
+                sub1 = subseqMatrix[i+n][aj];
+                subAux = Subsequencia::Concatenate(subAux, sub1, data);
+                sub1 = subseqMatrix[i][i+n-1];
+                subAux = Subsequencia::Concatenate(subAux, sub1, data);
+                sub1 = subseqMatrix[aj+1][tamanhoS+n-1];
+                subAux = Subsequencia::Concatenate(subAux, sub1, data);
+            }else if(i > aj){
+                subAux = subseqMatrix[0][aj];
+                sub1 = subseqMatrix[i][i+n-1];
+                subAux = Subsequencia::Concatenate(subAux, sub1, data);
+                sub1 = subseqMatrix[aj+1][i-1];
+                subAux = Subsequencia::Concatenate(subAux, sub1, data);
+                sub1 = subseqMatrix[i+n][tamanhoS+n-1];
+                subAux = Subsequencia::Concatenate(subAux, sub1, data);
+            }
+            
+            if (subAux.C < bestValorObj){
+                bestValorObj = subAux.C;
                 best_i = i;
                 best_j = aj;
             }
         }
     }
 
-    if(bestDelta < 0){
+    if(bestValorObj < s.valorObj){
+        /*cout << "Sequencia debug: ";
+        if(best_i < best_j){
+            for(int x = 0; x <= best_i-1; x++){
+                cout << s.sequencia[x] << " ";
+            }
+            for(int x = best_i+n; x <= best_j; x++){
+                cout << s.sequencia[x] << " ";
+            }
+            for(int x = best_i; x <= best_i+n-1; x++){
+                cout << s.sequencia[x] << " ";
+            }
+            for(int x = best_j+1; x <= tamanhoS+n-1; x++){
+                cout << s.sequencia[x] << " ";
+            }cout << endl;
+        }else if(best_i > best_j){
+            for(int x = 0; x <= best_j; x++){
+                cout << s.sequencia[x] << " ";
+            }
+            for(int x = best_i; x <= best_i+n-1; x++){
+                cout << s.sequencia[x] << " ";
+            }
+            for(int x = best_j+1; x <= best_i-1; x++){
+                cout << s.sequencia[x] << " ";
+            }
+            for(int x = best_i+n; x <= tamanhoS+n-1; x++){
+                cout << s.sequencia[x] << " ";
+            }cout << endl;
+        }*/
+    
         insercao(s.sequencia, best_i, best_j, n);
-        s.valorObj += bestDelta;
+        s.valorObj = bestValorObj;
+        UpdateAllSubseq(s, subseqMatrix, data);
         return true;
     }
 
@@ -428,7 +463,7 @@ bool bestImprovementOrOpt(Solucao& s, Data& data, int n){
     return false;
 }
 
-void BuscaLocal(Solucao& s, Data& data){
+void BuscaLocal(Solucao& s, vector<vector<Subsequencia>>& subseqMatrix, Data& data){
     vector<int> NL = {1, 2, 3, 4, 5};
     bool improved = false;
     int n;
@@ -437,27 +472,39 @@ void BuscaLocal(Solucao& s, Data& data){
         n = rand() % NL.size();
         switch (NL[n]){
             case 1:
-                improved = bestImprovementSwap(s, data);
+                improved = bestImprovementSwap(s, subseqMatrix, data);
+                //cout << "Passei pelo swap" << endl;
                 break;
             case 2:
-                improved = bestImprovement2Opt(s, data);
+                improved = bestImprovement2Opt(s, subseqMatrix, data);
+                //cout << "Passei pelo 2opt" << endl;
                 break;
             case 3:
-                improved = bestImprovementOrOpt(s, data, 1); // Reinsertion
+                improved = bestImprovementOrOpt(s, subseqMatrix, data, 1); // Reinsertion
+                //cout << "Passei pelo oropt1" << endl;
                 break;
             case 4:
-                improved = bestImprovementOrOpt(s, data, 2); // Or-opt2
+                improved = bestImprovementOrOpt(s, subseqMatrix, data, 2); // Or-opt2
+                //cout << "Passei pelo oropt2" << endl;
                 break;
             case 5:
-                improved = bestImprovementOrOpt(s, data, 3); // Or-opt3
+                improved = bestImprovementOrOpt(s, subseqMatrix, data, 3); // Or-opt3
+                //cout << "Passei pelo oropt3" << endl;
                 break;
-            }
+        }
 
-            if(improved){
-                NL = {1, 2, 3, 4, 5};
-            }else{
-                NL.erase(NL.begin() + n);
-            }
+        /*printarSequencia(s.sequencia);
+        cout << s.valorObj << endl;
+        calcularCustoAcumulado(s, data);
+        cout << s.valorObj << endl;
+
+        scanf("%*c");*/
+
+        if(improved){
+            NL = {1, 2, 3, 4, 5};
+        }else{
+            NL.erase(NL.begin() + n);
+        }
     }
 }
 
@@ -473,16 +520,6 @@ Solucao Perturbacao(Solucao s, vector<vector<Subsequencia>>& subseqMatrix, Data&
         i = rand() % (dimension-2) + 1;
         j = rand() % (dimension-2) + 1; 
     }
-
-    int vi = s.sequencia[i];
-    int vi_fim = s.sequencia[i+tamanho1-1];
-    int vi_next = s.sequencia[i+tamanho1];
-    int vi_prev = s.sequencia[i-1];
-
-    int vj = s.sequencia[j];
-    int vj_fim = s.sequencia[j+tamanho2-1];
-    int vj_next = s.sequencia[j+tamanho2];
-    int vj_prev = s.sequencia[j-1];
 
     Subsequencia subAux, sub1;
 
@@ -546,20 +583,20 @@ Solucao ILS(int maxIter, int maxIterIls, int& dimension, Data& data){
 
         UpdateAllSubseq(s, subseqMatrix, data);
 
-        printarSequencia(s.sequencia);
-        cout << s.valorObj << endl << endl;
+        /*printarSequencia(s.sequencia);
+        cout << s.valorObj << endl << endl;*/
 
         Solucao best = s;
 
         iterIls = 0;
 
         while(iterIls <= maxIterIls){
-            /*BuscaLocal(s, data);
+            BuscaLocal(s, subseqMatrix, data);
 
             if(s.valorObj < best.valorObj){
                 best = s;
                 iterIls = 0;
-            }*/
+            }
 
             s = Perturbacao(best, subseqMatrix, data, dimension);
 
