@@ -79,10 +79,10 @@ void mostrarSubsequencia(Subsequencia& subsequencia){
     cout << "Custo de Atraso: " << subsequencia.W << endl;
 }
 
-vector<int> escolher1NoAleatorio(int& tamanho){
+vector<int> escolher1NoAleatorio(int& tamanho){//nao vai mais ser aleatorio
     vector<int> s(1);
 
-    s[0] =  rand() % tamanho + 1;
+    s[0] =  1;//rand() % tamanho + 1;
 
     return s;
 }
