@@ -641,8 +641,8 @@ int main(int argc, char** argv) {
         valorTotal += s.valorObj;
     }
 
-    cout << tempoTotal/10 << " " << valorTotal/10 << endl;
-    //printf("%.3lf %.2lf\n", tempoTotal/10, valorTotal/10);
+    //cout << tempoTotal/10 << " " << valorTotal/10 << endl;
+    printf("%.3lf %.2lf\n", tempoTotal/10, valorTotal/10);
     
 
     return 0;
