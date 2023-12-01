@@ -102,7 +102,7 @@ int hungarian_init(hungarian_problem_t* p, double** cost_matrix, int rows, int c
       p->assignment[i][j] = 0;
 
       if (max_cost < p->cost[i][j])
-	max_cost = p->cost[i][j];
+	      max_cost = p->cost[i][j];
     }
   }
 
@@ -110,7 +110,7 @@ int hungarian_init(hungarian_problem_t* p, double** cost_matrix, int rows, int c
   if (mode == HUNGARIAN_MODE_MAXIMIZE_UTIL) {
     for(i=0; i<p->num_rows; i++) {
       for(j=0; j<p->num_cols; j++) {
-	p->cost[i][j] =  max_cost - p->cost[i][j];
+	      p->cost[i][j] =  max_cost - p->cost[i][j];
       }
     }
   }
