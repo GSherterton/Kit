@@ -13,7 +13,7 @@ using namespace std;
 
 struct Node{
 	vector<pair<int, int>> forbidden_arcs;//lista de arcos proibidos do no
-	vector<vector<int>>& subtour;//conjunto de subtours da solucao
+	vector<vector<int>> subtour;//conjunto de subtours da solucao
 	double lower_bound;//custo total da solucao do algoritmo hungaro
 	int chosen;//indice do menor subtour
 	bool feasible;//indica se a solucao do AP_TSp e viavel
@@ -84,30 +84,31 @@ int menorSubtourIndex(vector<vector<int>>& subtour){
 	return menor;
 }
 
-void criarUmNo(hungarian_problem_t& p, int dimension, int cost){
-	lower_bound = cost;
-	preencherSubtour(p, subtour, dimension);
+void iniciarNo(Node node, hungarian_problem_t& p, int dimension){
+	node.lower_bound = hungarian_solve(&p);
+	preencherSubtour(p, node.subtour, dimension);
 
-	chosen = menorSubtourIndex(subtour);
+	node.chosen = menorSubtourIndex(node.subtour);
 	
-	if(subtour.size() > 1){
-		feasible = 0;
+	if(node.subtour.size() > 1){
+		node.feasible = 0;
 	}else{
-		feasible = 1;
+		node.feasible = 1;
 	}
 }
 
-void branchAndBound(hungarian_problem_t& p, int dimension, int cost){
-	Node root = criarUmNo(p, dimension, cost);//fiz so ate a parte de achar os subtours e preencher o primeiro node
+void branchAndBound(hungarian_problem_t& p, int dimension){
+	Node root;
+	iniciarNo(root, p, dimension);//fiz so ate a parte de achar os subtours e preencher o primeiro node
 
 	list<Node> tree;
 	tree.push_back(root);
 
-	double upper_bound = numeric_limits::infinity<double>();
+	double upper_bound = numeric_limits<double>::infinity();
 
-	while(!tree.empty()){
+	/*while(!tree.empty()){
 		auto node = branchingStrategy();
-	}
+	}*/
 }
 
 int main(int argc, char** argv){
@@ -127,23 +128,23 @@ int main(int argc, char** argv){
 	int mode = HUNGARIAN_MODE_MINIMIZE_COST;
 	hungarian_init(&p, cost, data->getDimension(), data->getDimension(), mode); // Carregando o problema
 
-	double obj_value = hungarian_solve(&p);
-	cout << "Obj. value: " << obj_value << endl;
+	//double obj_value = hungarian_solve(&p);
+	/*cout << "Obj. value: " << obj_value << endl;
 
 	cout << "Assignment" << endl;
-	hungarian_print_assignment(&p);
+	hungarian_print_assignment(&p);*/
 
-	branchAndBound(p, data->getDimension(), obj_value);
+	branchAndBound(p, data->getDimension());
 
-	vector<vector<int>> subtour;
+	//vector<vector<int>> subtour;
 
-	preencherSubtour(p, subtour, data->getDimension());
+	//preencherSubtour(p, subtour, data->getDimension());
 
 	/*for(int i = 0; i < subtour.size(); i++){
 		printarSubtour(subtour[i]);
 	}*/
 
-	index = menorSubtourIndex(subtour);
+	//index = menorSubtourIndex(subtour);
 	
 	hungarian_free(&p);
 	for (int i = 0; i < data->getDimension(); i++) delete [] cost[i];
