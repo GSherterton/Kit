@@ -1,5 +1,6 @@
 #include <iostream>
 #include <vector>
+#include <list>
 #include <math.h>
 #include <stdlib.h>
 #include <time.h>
@@ -24,9 +25,9 @@ void printarSubtour(vector<int>& subtour){
 	}cout << endl;
 }
 
-void preencherSubtour(hungarian_problem_t& p, vector<vector<int>>& subtour, int tamanho){
+void preencherSubtour(hungarian_problem_t& p, vector<vector<int>>& subtour, int dimension){
 	int i, index;
-	vector<bool> passou(tamanho, 0);
+	vector<bool> passou(dimension, 0);
 	bool acabou = 0;
 
 	while(!acabou){//debugar
@@ -35,14 +36,14 @@ void preencherSubtour(hungarian_problem_t& p, vector<vector<int>>& subtour, int 
 		}cout << endl;*/
 
 		vector<int> aux;
-		for(i = 0; i < tamanho; i++){//so para achar o primeiro que ele ainda n passou
+		for(i = 0; i < dimension; i++){//so para achar o primeiro que ele ainda n passou
 			if(passou[i] == 0){//se ele ainda n passou por ele vou colocar na sequencia
 				passou[i] = 1;
 				aux.push_back(i+1);
 
 				do{
 					//printarSubtour(aux);
-					for(index = 0; index < tamanho; index++){
+					for(index = 0; index < dimension; index++){
 						if(p.assignment[i][index] == 1){
 							aux.push_back(index+1);
 							passou[i] = 1;
@@ -62,7 +63,7 @@ void preencherSubtour(hungarian_problem_t& p, vector<vector<int>>& subtour, int 
 
 		//ver se acabou
 		acabou = 1;
-		for(i = 0; i < tamanho; i++){
+		for(i = 0; i < dimension; i++){
 			if(passou[i] == 0){
 				acabou = 0;
 				break;
@@ -71,10 +72,48 @@ void preencherSubtour(hungarian_problem_t& p, vector<vector<int>>& subtour, int 
 	}
 }
 
-int main(int argc, char** argv) {
+int menorSubtourIndex(vector<vector<int>>& subtour){
+	int menor = subtour[0].size();
 
+	for(int i = 1; i < subtour.size(); i++){
+		if(subtour[i].size() < menor){
+			menor = subtour[i].size();
+		}
+	}
+
+	return menor;
+}
+
+void criarUmNo(hungarian_problem_t& p, int dimension, int cost){
+	lower_bound = cost;
+	preencherSubtour(p, subtour, dimension);
+
+	chosen = menorSubtourIndex(subtour);
+	
+	if(subtour.size() > 1){
+		feasible = 0;
+	}else{
+		feasible = 1;
+	}
+}
+
+void branchAndBound(hungarian_problem_t& p, int dimension, int cost){
+	Node root = criarUmNo(p, dimension, cost);//fiz so ate a parte de achar os subtours e preencher o primeiro node
+
+	list<Node> tree;
+	tree.push_back(root);
+
+	double upper_bound = numeric_limits::infinity<double>();
+
+	while(!tree.empty()){
+		auto node = branchingStrategy();
+	}
+}
+
+int main(int argc, char** argv){
 	Data * data = new Data(argc, argv[1]);
 	data->readData();
+	int index;
 
 	double **cost = new double*[data->getDimension()];
 	for (int i = 0; i < data->getDimension(); i++){
@@ -94,6 +133,8 @@ int main(int argc, char** argv) {
 	cout << "Assignment" << endl;
 	hungarian_print_assignment(&p);
 
+	branchAndBound(p, data->getDimension(), obj_value);
+
 	vector<vector<int>> subtour;
 
 	preencherSubtour(p, subtour, data->getDimension());
@@ -102,6 +143,8 @@ int main(int argc, char** argv) {
 		printarSubtour(subtour[i]);
 	}*/
 
+	index = menorSubtourIndex(subtour);
+	
 	hungarian_free(&p);
 	for (int i = 0; i < data->getDimension(); i++) delete [] cost[i];
 	delete [] cost;
