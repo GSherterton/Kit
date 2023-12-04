@@ -10,13 +10,21 @@ using namespace std;
 #include "data.h"
 #include "hungarian.h"
 
-void printarSubtour(vector<int>& subtours){
-	for(int i = 0; i < subtours.size(); i++){
-		cout << subtours[i] << " ";
+struct Node{
+	vector<pair<int, int>> forbidden_arcs;//lista de arcos proibidos do no
+	vector<vector<int>>& subtour;//conjunto de subtours da solucao
+	double lower_bound;//custo total da solucao do algoritmo hungaro
+	int chosen;//indice do menor subtour
+	bool feasible;//indica se a solucao do AP_TSp e viavel
+};
+
+void printarSubtour(vector<int>& subtour){
+	for(int i = 0; i < subtour.size(); i++){
+		cout << subtour[i] << " ";
 	}cout << endl;
 }
 
-void preencherSubtour(hungarian_problem_t& p, vector<vector<int>>& subtours, int tamanho){
+void preencherSubtour(hungarian_problem_t& p, vector<vector<int>>& subtour, int tamanho){
 	int i, index;
 	vector<bool> passou(tamanho, 0);
 	bool acabou = 0;
@@ -50,7 +58,7 @@ void preencherSubtour(hungarian_problem_t& p, vector<vector<int>>& subtours, int
 		//printarSubtour(aux);
 		//scanf("%*c");
 
-		subtours.push_back(aux);
+		subtour.push_back(aux);
 
 		//ver se acabou
 		acabou = 1;
@@ -86,13 +94,13 @@ int main(int argc, char** argv) {
 	cout << "Assignment" << endl;
 	hungarian_print_assignment(&p);
 
-	vector<vector<int>> subtours;
+	vector<vector<int>> subtour;
 
-	preencherSubtour(p, subtours, data->getDimension());
+	preencherSubtour(p, subtour, data->getDimension());
 
-	for(int i = 0; i < subtours.size(); i++){
-		printarSubtour(subtours[i]);
-	}
+	/*for(int i = 0; i < subtour.size(); i++){
+		printarSubtour(subtour[i]);
+	}*/
 
 	hungarian_free(&p);
 	for (int i = 0; i < data->getDimension(); i++) delete [] cost[i];
