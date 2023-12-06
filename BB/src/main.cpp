@@ -126,6 +126,20 @@ list<Node>::iterator branchingStrategy(list<Node> tree){//fazer por profundidade
 	//Node* p = tree.begin();
 	//return p;
 	return tree.begin();
+
+	//o nivel ou profundidade de um no se da pela quantidade de arcos proibidos que um no possui
+	//fazer isso depois, por enquanto so testar o primeiro no mesmo e achar o erro
+	int maior = 0;
+	auto itMaior = tree.begin();
+
+	for(auto it = tree.begin(); it != tree.end(); it++){
+		if(it->forbidden_arcs.size() > maior){
+			maior = it->forbidden_arcs.size();
+			itMaior = it;
+		}
+	}
+
+	return itMaior;
 }
 
 void proibindoArcos(hungarian_problem_t& p, Node& node){
@@ -163,7 +177,7 @@ void branchAndBound(hungarian_problem_t& p, int dimension, Data& data){
 		auto node = branchingStrategy(tree); //node apontara para algum no da arvore
 		getSolutionHungarian(*node, p, dimension);
 
-		//printNode(*node);
+		printNode(*node);
 
 		if(node->lower_bound > upper_bound){
 			tree.erase(node);
@@ -176,9 +190,11 @@ void branchAndBound(hungarian_problem_t& p, int dimension, Data& data){
 			upper_bound = min(upper_bound, node->lower_bound);
 		}else{
 			/*Adicionando os filhos*/
+			//esta dando erro na hora de verificar essa condicao, como se o iterator estivesse se perdendo, isso apos eu tentar dar um push_back
+			//alem disso esta dando erro na hora de apagar o node da tree
 			for(int i = 0; i < node->subtour[node->chosen].size() - 1; i++){//iterar por todos os arcos do subtour escolhido
 			//for(int i = 0; i < 3 - 1; i++){//iterar por todos os arcos do subtour escolhido
-				printNode(*node);
+				//printNode(*node);
 
 				cout << "No adicionado\n";
 				Node n;//criar no auxiliar
@@ -191,11 +207,12 @@ void branchAndBound(hungarian_problem_t& p, int dimension, Data& data){
 				};
 
 				n.forbidden_arcs.push_back(forbidden_arc);
-				tree.push_back(n);//inserir novos nos na arvore
+				//tree.push_back(n);//inserir novos nos na arvore
 			}
 		}
 
 		tree.erase(node);
+		cout << tree.size() << endl;
 	}
 }
 
@@ -222,7 +239,10 @@ int main(int argc, char** argv){
 	cout << "Assignment" << endl;
 	hungarian_print_assignment(&p);*/
 
-	list<int> lista;
+	//-----------------------------------------------------------------------------------
+
+	//teste de usar iterator em uma lista
+	/*list<int> lista;
 
 	lista.push_back(1);
 	auto x = lista.begin();
@@ -235,9 +255,11 @@ int main(int argc, char** argv){
 
 	for(auto it = lista.begin(); it != lista.end(); it++){
 		cout << *it << " ";
-	}cout << endl;
+	}cout << endl;*/
 
-	//branchAndBound(p, data->getDimension(), *data);
+	//-----------------------------------------------------------------------------------
+
+	branchAndBound(p, data->getDimension(), *data);
 
 	//vector<vector<int>> subtour;
 
