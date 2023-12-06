@@ -25,6 +25,15 @@ void printarSubtour(vector<int>& subtour){
 	}cout << endl;
 }
 
+void printarMatrizCustos(hungarian_problem_t p, int dimension){
+	for(int i = 0; i < dimension; i++){
+		for(int j = 0; j < dimension; j++){
+			cout << p.cost[i][j] << " ";
+		}
+		cout << endl;
+	}
+}
+
 void printNode(Node node){
 	for(int i = 0; i < node.forbidden_arcs.size(); i++){
 		cout << node.forbidden_arcs[i].first << " - " << node.forbidden_arcs[i].second << endl;
@@ -120,12 +129,12 @@ void iniciarRaiz(Node node, hungarian_problem_t& p, int dimension){//talvez tira
 	}
 }
 
-list<Node>::iterator branchingStrategy(list<Node> tree){//fazer por profundidade
+list<Node>::iterator branchingStrategy(list<Node>& tree){//fazer por profundidade
 //Node* branchingStrategy(list<Node> tree){//fazer por profundidade
 	//a principio, so para a primeira iteracao
 	//Node* p = tree.begin();
 	//return p;
-	return tree.begin();
+	//return tree.begin();
 
 	//o nivel ou profundidade de um no se da pela quantidade de arcos proibidos que um no possui
 	//fazer isso depois, por enquanto so testar o primeiro no mesmo e achar o erro
@@ -144,12 +153,19 @@ list<Node>::iterator branchingStrategy(list<Node> tree){//fazer por profundidade
 
 void proibindoArcos(hungarian_problem_t& p, Node& node){
 	for(int i = 0; i < node.forbidden_arcs.size(); i++){
-		p.cost[node.forbidden_arcs[i].first][node.forbidden_arcs[i].second] = 99999999;
+		//cout << "Proibi um arco\n";
+		p.cost[node.forbidden_arcs[i].first - 1][node.forbidden_arcs[i].second - 1] = 99999999;
+		/*cout << "Custo do arco " << node.forbidden_arcs[i].first << " - " << node.forbidden_arcs[i].second << ": "
+		<< p.cost[node.forbidden_arcs[i].first - 1][node.forbidden_arcs[i].second - 1] << endl;*/
 	}
 }	
 
-void getSolutionHungarian(Node& node, hungarian_problem_t p, int dimension){
-	proibindoArcos(p, node);
+void getSolutionHungarian(Node& node, hungarian_problem_t p, int dimension, double** cost){//crio uma copia do hungarian_problem para usar a matriz de custo
+	hungarian_init(&p, cost, dimension, dimension, HUNGARIAN_MODE_MINIMIZE_COST);
+
+	//printarMatrizCustos(p, dimension);
+
+	proibindoArcos(p, node);//proibo os arcos da matriz
 	
 	node.lower_bound = hungarian_solve(&p);
 	preencherSubtour(p, node.subtour, dimension);
@@ -161,10 +177,12 @@ void getSolutionHungarian(Node& node, hungarian_problem_t p, int dimension){
 	}else{
 		node.feasible = 0;
 	}
+
+	hungarian_free(&p);
 }
 
-void branchAndBound(hungarian_problem_t& p, int dimension, Data& data){
-	Node root;
+Node branchAndBound(hungarian_problem_t& p, int dimension, Data& data, double** cost){
+	Node root, best;
 	//iniciarRaiz(root, p, dimension);
 
 	list<Node> tree;
@@ -173,9 +191,9 @@ void branchAndBound(hungarian_problem_t& p, int dimension, Data& data){
 	double upper_bound = numeric_limits<double>::infinity();
 
 	while(!tree.empty()){
-		cout << "Entrei aqui\n";
+		//cout << "Entrei aqui\n";
 		auto node = branchingStrategy(tree); //node apontara para algum no da arvore
-		getSolutionHungarian(*node, p, dimension);
+		getSolutionHungarian(*node, p, dimension, cost);
 
 		printNode(*node);
 
@@ -187,13 +205,14 @@ void branchAndBound(hungarian_problem_t& p, int dimension, Data& data){
 		
 		if(node->feasible){
 			cout << "Possivel solucao encontrada\n";
-			upper_bound = min(upper_bound, node->lower_bound);
+
+			if(node->lower_bound < upper_bound){
+				upper_bound = node->lower_bound;
+				best = *node;
+			}
 		}else{
 			/*Adicionando os filhos*/
-			//esta dando erro na hora de verificar essa condicao, como se o iterator estivesse se perdendo, isso apos eu tentar dar um push_back
-			//alem disso esta dando erro na hora de apagar o node da tree
 			for(int i = 0; i < node->subtour[node->chosen].size() - 1; i++){//iterar por todos os arcos do subtour escolhido
-			//for(int i = 0; i < 3 - 1; i++){//iterar por todos os arcos do subtour escolhido
 				//printNode(*node);
 
 				cout << "No adicionado\n";
@@ -207,12 +226,13 @@ void branchAndBound(hungarian_problem_t& p, int dimension, Data& data){
 				};
 
 				n.forbidden_arcs.push_back(forbidden_arc);
-				//tree.push_back(n);//inserir novos nos na arvore
+				tree.push_back(n);//inserir novos nos na arvore
+				//scanf("%*c");
 			}
 		}
 
 		tree.erase(node);
-		cout << tree.size() << endl;
+		//cout << tree.size() << endl;
 	}
 }
 
@@ -232,6 +252,18 @@ int main(int argc, char** argv){
 	hungarian_problem_t p;
 	int mode = HUNGARIAN_MODE_MINIMIZE_COST;
 	hungarian_init(&p, cost, data->getDimension(), data->getDimension(), mode); // Carregando o problema
+
+	/*printarMatrizCustos(p, data->getDimension());
+	cout << endl;
+
+	hungarian_solve(&p);
+
+	hungarian_free(&p);
+
+	hungarian_init(&p, cost, data->getDimension(), data->getDimension(), mode);
+
+	printarMatrizCustos(p, data->getDimension());
+	cout << endl;*/
 
 	//double obj_value = hungarian_solve(&p);
 	/*cout << "Obj. value: " << obj_value << endl;
@@ -259,7 +291,8 @@ int main(int argc, char** argv){
 
 	//-----------------------------------------------------------------------------------
 
-	branchAndBound(p, data->getDimension(), *data);
+	Node best = branchAndBound(p, data->getDimension(), *data, cost);
+	printNode(best);
 
 	//vector<vector<int>> subtour;
 

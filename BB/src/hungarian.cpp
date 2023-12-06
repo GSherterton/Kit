@@ -126,7 +126,7 @@ int hungarian_init(hungarian_problem_t* p, double** cost_matrix, int rows, int c
 
 
 
-void hungarian_free(hungarian_problem_t* p) {
+void hungarian_free(hungarian_problem_t* p){
   int i;
   for(i=0; i<p->num_rows; i++) {
     free(p->cost[i]);
