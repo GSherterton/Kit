@@ -195,16 +195,16 @@ Node branchAndBound(hungarian_problem_t& p, int dimension, Data& data, double** 
 		auto node = branchingStrategy(tree); //node apontara para algum no da arvore
 		getSolutionHungarian(*node, p, dimension, cost);
 
-		printNode(*node);
+		//printNode(*node);
 
 		if(node->lower_bound > upper_bound){
 			tree.erase(node);
-			cout << "No invalido\n";
+			//cout << "No invalido\n";
 			continue;
 		}
 		
 		if(node->feasible){
-			cout << "Possivel solucao encontrada\n";
+			//cout << "Possivel solucao encontrada\n";
 
 			if(node->lower_bound < upper_bound){
 				upper_bound = node->lower_bound;
@@ -215,7 +215,7 @@ Node branchAndBound(hungarian_problem_t& p, int dimension, Data& data, double** 
 			for(int i = 0; i < node->subtour[node->chosen].size() - 1; i++){//iterar por todos os arcos do subtour escolhido
 				//printNode(*node);
 
-				cout << "No adicionado\n";
+				//cout << "No adicionado\n";
 				Node n;//criar no auxiliar
 
 				n.forbidden_arcs = node->forbidden_arcs;//herdar os arcos passados
@@ -234,6 +234,8 @@ Node branchAndBound(hungarian_problem_t& p, int dimension, Data& data, double** 
 		tree.erase(node);
 		//cout << tree.size() << endl;
 	}
+
+	return best;
 }
 
 int main(int argc, char** argv){
@@ -291,8 +293,17 @@ int main(int argc, char** argv){
 
 	//-----------------------------------------------------------------------------------
 
+	clock_t start = clock();
 	Node best = branchAndBound(p, data->getDimension(), *data, cost);
-	printNode(best);
+	clock_t end = clock();
+
+	double tempoTotal = (double)(end - start) / (double)(CLOCKS_PER_SEC);
+	double valorTotal = best.lower_bound;
+
+	printf("%.3lf %.2lf\n", tempoTotal, valorTotal);
+
+	//Node best = branchAndBound(p, data->getDimension(), *data, cost);
+	//printNode(best);
 
 	//vector<vector<int>> subtour;
 
