@@ -1,4 +1,4 @@
 g++ -m32 -O3 -fPIC -fexceptions -DNDEBUG -DIL_STD -std=c++0x src/*.cpp -o bb
 
-//mudar o nome da  instancia
-./bb ./instances/dantzig42.tsp
+//mudar o nome da  instancia e da estrategia
+./bb ./instances/burma14.tsp dfs

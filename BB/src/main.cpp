@@ -129,26 +129,26 @@ void iniciarRaiz(Node node, hungarian_problem_t& p, int dimension){//talvez tira
 	}
 }
 
-list<Node>::iterator branchingStrategy(list<Node>& tree){//fazer por profundidade
-//Node* branchingStrategy(list<Node> tree){//fazer por profundidade
-	//a principio, so para a primeira iteracao
-	//Node* p = tree.begin();
-	//return p;
-	//return tree.begin();
+list<Node>::iterator branchingStrategy(list<Node>& tree, string& estrategia){
+	if(estrategia.compare("dfs") == 0){//profundidade
+		return --tree.end();
+	}else if(estrategia.compare("bfs") == 0){//largura
+		return tree.begin();
+	}else if(estrategia.compare("lb") == 0){//menor lb
+		int menor = 0;
+		auto itMenor = tree.begin();
 
-	//o nivel ou profundidade de um no se da pela quantidade de arcos proibidos que um no possui
-	//fazer isso depois, por enquanto so testar o primeiro no mesmo e achar o erro
-	int maior = 0;
-	auto itMaior = tree.begin();
-
-	for(auto it = tree.begin(); it != tree.end(); it++){
-		if(it->forbidden_arcs.size() > maior){
-			maior = it->forbidden_arcs.size();
-			itMaior = it;
+		for(auto it = tree.begin(); it != tree.end(); it++){
+			if(it->lower_bound < menor){
+				menor = it->lower_bound;
+				itMenor = it;
+			}
 		}
+
+		return itMenor;
 	}
 
-	return itMaior;
+	return tree.begin();
 }
 
 void proibindoArcos(hungarian_problem_t& p, Node& node){
@@ -167,7 +167,9 @@ void getSolutionHungarian(Node& node, hungarian_problem_t p, int dimension, doub
 
 	proibindoArcos(p, node);//proibo os arcos da matriz
 	
+	//cout << "Lower Bound antes: " << node.lower_bound << endl;
 	node.lower_bound = hungarian_solve(&p);
+	//cout << "Lower Bound depois: " << node.lower_bound << endl;
 	preencherSubtour(p, node.subtour, dimension);
 
 	node.chosen = menorSubtourIndex(node.subtour);
@@ -181,7 +183,7 @@ void getSolutionHungarian(Node& node, hungarian_problem_t p, int dimension, doub
 	hungarian_free(&p);
 }
 
-Node branchAndBound(hungarian_problem_t& p, int dimension, Data& data, double** cost){
+Node branchAndBound(hungarian_problem_t& p, int dimension, Data& data, double** cost, string& estrategia){
 	Node root, best;
 	//iniciarRaiz(root, p, dimension);
 
@@ -192,7 +194,7 @@ Node branchAndBound(hungarian_problem_t& p, int dimension, Data& data, double** 
 
 	while(!tree.empty()){
 		//cout << "Entrei aqui\n";
-		auto node = branchingStrategy(tree); //node apontara para algum no da arvore
+		auto node = branchingStrategy(tree, estrategia); //node apontara para algum no da arvore
 		getSolutionHungarian(*node, p, dimension, cost);
 
 		//printNode(*node);
@@ -218,6 +220,7 @@ Node branchAndBound(hungarian_problem_t& p, int dimension, Data& data, double** 
 				//cout << "No adicionado\n";
 				Node n;//criar no auxiliar
 
+				n.lower_bound = node->lower_bound;
 				n.forbidden_arcs = node->forbidden_arcs;//herdar os arcos passados
 
 				pair<int, int> forbidden_arc = {//proibir um arco novo
@@ -232,6 +235,7 @@ Node branchAndBound(hungarian_problem_t& p, int dimension, Data& data, double** 
 		}
 
 		tree.erase(node);
+		//cout << "Apaguei um no\n";
 		//cout << tree.size() << endl;
 	}
 
@@ -239,8 +243,12 @@ Node branchAndBound(hungarian_problem_t& p, int dimension, Data& data, double** 
 }
 
 int main(int argc, char** argv){
-	Data * data = new Data(argc, argv[1]);
+	Data * data = new Data(2, argv[1]);
 	data->readData();
+
+	string estrategia = argv[2];
+	//cout << "Estrategia: " << estrategia << endl;
+
 	int index;
 
 	double **cost = new double*[data->getDimension()];
@@ -294,7 +302,7 @@ int main(int argc, char** argv){
 	//-----------------------------------------------------------------------------------
 
 	clock_t start = clock();
-	Node best = branchAndBound(p, data->getDimension(), *data, cost);
+	Node best = branchAndBound(p, data->getDimension(), *data, cost, estrategia);
 	clock_t end = clock();
 
 	double tempoTotal = (double)(end - start) / (double)(CLOCKS_PER_SEC);
