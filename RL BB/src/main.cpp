@@ -13,11 +13,11 @@ using namespace std;
 // #include "hungarian.h"
 
 struct Node{
-	vector<pair<int, int>> forbidden_arcs;//lista de arcos proibidos do no
-	vector<vector<int>> subtour;//conjunto de subtours da solucao
-	double lower_bound;//custo total da solucao do algoritmo hungaro
-	int chosen;//indice do menor subtour
-	bool feasible;//indica se a solucao do AP_TSp e viavel
+	vector<pair<int, int>> forbidden_arcs;	//lista de arcos proibidos do no
+	vector<vector<int>> subtour;			//conjunto de subtours da solucao
+	double lower_bound;						//custo total da solucao do algoritmo hungaro
+	int chosen;								//indice do menor subtour
+	bool feasible;							//indica se a solucao do AP_TSp e viavel
 };
 
 void printarSubtour(vector<int>& subtour){
@@ -117,19 +117,6 @@ int menorSubtourIndex(vector<vector<int>>& subtour){
 	return menor.second;
 }
 
-/*void iniciarRaiz(Node node, hungarian_problem_t& p, int dimension){//talvez tirar isso
-	node.lower_bound = hungarian_solve(&p);
-	preencherSubtour(p, node.subtour, dimension);
-
-	node.chosen = menorSubtourIndex(node.subtour);
-	
-	if(node.subtour.size() == 1){
-		node.feasible = 1;
-	}else{
-		node.feasible = 0;
-	}
-}*/
-
 list<Node>::iterator branchingStrategy(list<Node>& tree, string& estrategia){
 	if(estrategia.compare("dfs") == 0){//profundidade
 		return --tree.end();
@@ -152,17 +139,17 @@ list<Node>::iterator branchingStrategy(list<Node>& tree, string& estrategia){
 	return tree.begin();
 }
 
-/*void proibindoArcos(hungarian_problem_t& p, Node& node){
+/*void proibindoArcos(, Node& node){
 	for(int i = 0; i < node.forbidden_arcs.size(); i++){
 		//cout << "Proibi um arco\n";
 		p.cost[node.forbidden_arcs[i].first - 1][node.forbidden_arcs[i].second - 1] = 99999999;
 		// cout << "Custo do arco " << node.forbidden_arcs[i].first << " - " << node.forbidden_arcs[i].second << ": "
 		// << p.cost[node.forbidden_arcs[i].first - 1][node.forbidden_arcs[i].second - 1] << endl;
 	}
-}*/	
+}*/
 
-/*void getSolutionHungarian(Node& node, hungarian_problem_t p, int dimension, double** cost){//crio uma copia do hungarian_problem para usar a matriz de custo
-	hungarian_init(&p, cost, dimension, dimension, HUNGARIAN_MODE_MINIMIZE_COST);
+void dualLagrangiano(Node& node, int dimension, double** cost){
+	// hungarian_init(&p, cost, dimension, dimension, HUNGARIAN_MODE_MINIMIZE_COST);
 
 	//printarMatrizCustos(p, dimension);
 
@@ -182,9 +169,9 @@ list<Node>::iterator branchingStrategy(list<Node>& tree, string& estrategia){
 	}
 
 	hungarian_free(&p);
-}*/
+}
 
-/*Node branchAndBound(hungarian_problem_t& p, int dimension, Data& data, double** cost, string& estrategia){
+/*Node branchAndBound(int dimension, Data& data, double** cost, string& estrategia){
 	Node root, best;
 	//iniciarRaiz(root, p, dimension);
 
@@ -196,7 +183,9 @@ list<Node>::iterator branchingStrategy(list<Node>& tree, string& estrategia){
 	while(!tree.empty()){
 		//cout << "Entrei aqui\n";
 		auto node = branchingStrategy(tree, estrategia); //node apontara para algum no da arvore
-		getSolutionHungarian(*node, p, dimension, cost);
+		// getSolutionHungarian(*node, p, dimension, cost); //trocar essa solucao
+		dualLagrangiano(*node, dimension, cost);
+
 
 		//printNode(*node);
 
@@ -260,7 +249,6 @@ int main(int argc, char** argv){
 		}
 	}
 
-	//--------------------------------------------------------------
 	printf("Matriz de custos\n");
 	for(int i = 0; i < data->getDimension(); i++){
 		for(int j = 0; j < data->getDimension(); j++){
@@ -269,31 +257,28 @@ int main(int argc, char** argv){
 		puts("");
 	}
 
-	//--------------------------------------------------------------
+	//antes de tudo tem que implementar a ideia de resolver o dualLagrangiano
 
-	// hungarian_problem_t p;
-	// int mode = HUNGARIAN_MODE_MINIMIZE_COST;
-	// hungarian_init(&p, cost, data->getDimension(), data->getDimension(), mode); // Carregando o problema
 
+	//não vai precisar da solução do problema hungaro
+	//e vai substituir ela pela resolução do MST
+
+	clock_t start = clock();
+	// Node best = branchAndBound(data->getDimension(), *data, cost, estrategia);
+	clock_t end = clock();
+
+	double tempoTotal = (double)(end - start) / (double)(CLOCKS_PER_SEC);
+	double valorTotal = 0;//best.lower_bound;
+
+	printf("%.3lf %.2lf\n", tempoTotal, valorTotal);
+
+	for (int i = 0; i < data->getDimension(); i++) delete [] cost[i];
+	delete [] cost;
+	delete data;
+
+	//debug
 	/*printarMatrizCustos(p, data->getDimension());
 	cout << endl;
-
-	hungarian_solve(&p);
-
-	hungarian_free(&p);
-
-	hungarian_init(&p, cost, data->getDimension(), data->getDimension(), mode);
-
-	printarMatrizCustos(p, data->getDimension());
-	cout << endl;*/
-
-	//double obj_value = hungarian_solve(&p);
-	/*cout << "Obj. value: " << obj_value << endl;
-
-	cout << "Assignment" << endl;
-	hungarian_print_assignment(&p);*/
-
-	//-----------------------------------------------------------------------------------
 
 	//teste de usar iterator em uma lista
 	/*list<int> lista;
@@ -310,35 +295,6 @@ int main(int argc, char** argv){
 	for(auto it = lista.begin(); it != lista.end(); it++){
 		cout << *it << " ";
 	}cout << endl;*/
-
-	//-----------------------------------------------------------------------------------
-
-	clock_t start = clock();
-	// Node best = branchAndBound(p, data->getDimension(), *data, cost, estrategia);
-	clock_t end = clock();
-
-	double tempoTotal = (double)(end - start) / (double)(CLOCKS_PER_SEC);
-	double valorTotal = 0;//best.lower_bound;
-
-	printf("%.3lf %.2lf\n", tempoTotal, valorTotal);
-
-	//Node best = branchAndBound(p, data->getDimension(), *data, cost);
-	//printNode(best);
-
-	//vector<vector<int>> subtour;
-
-	//preencherSubtour(p, subtour, data->getDimension());
-
-	/*for(int i = 0; i < subtour.size(); i++){
-		printarSubtour(subtour[i]);
-	}*/
-
-	//index = menorSubtourIndex(subtour);
-	
-	// hungarian_free(&p);
-	for (int i = 0; i < data->getDimension(); i++) delete [] cost[i];
-	delete [] cost;
-	delete data;
 
 	return 0;
 }
