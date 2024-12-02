@@ -1,4 +1,4 @@
-g++ -m64 -O3 -fPIC -fexceptions -DNDEBUG -DIL_STD -std=c++0x src/*.cpp -o bb
+g++ -m64 -O3 -fPIC -fexceptions -DNDEBUG -DIL_STD -std=c++0x src/*.cpp -o rlbb
 
 //mudar o nome da  instancia e da estrategia
 ./rlbb ./instances/burma14.tsp dfs

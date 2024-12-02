@@ -10,6 +10,7 @@
 using namespace std;
 
 #include "data.h"
+#include "Kruskal.h"
 // #include "hungarian.h"
 
 struct Node{
@@ -241,21 +242,40 @@ int main(int argc, char** argv){
 
 	int index;
 
-	double **cost = new double*[data->getDimension()];
+	vector<vector<double>> cost;
 	for (int i = 0; i < data->getDimension(); i++){
-		cost[i] = new double[data->getDimension()];
+		vector<double> aux;
 		for (int j = 0; j < data->getDimension(); j++){
-			cost[i][j] = data->getDistance(i,j);
+			aux.push_back(data->getDistance(i,j));
 		}
+		cost.push_back(aux);
 	}
 
 	printf("Matriz de custos\n");
 	for(int i = 0; i < data->getDimension(); i++){
 		for(int j = 0; j < data->getDimension(); j++){
-			printf("%8.lf ", cost[i][j]);
+			if(cost[i][j] > 999999){
+				printf(" inf ");
+			}else{
+				printf("%4.lf ", cost[i][j]);
+			}
 		}
 		puts("");
 	}
+
+	Kruskal kruskal(cost);
+	double kruskalCost = kruskal.MST(cost.size()-1);
+	vector<pair<int, int>> edges = kruskal.getEdges();
+
+	//debug do Kruskal
+	// printf("Custo MST: %.2lf\n", kruskalCost);
+	// printf("Edges:\n");
+	// for(int i = 0; i < edges.size(); i++){
+	// 	printf("%2.d - %2.d\n", edges[i].first, edges[i].second);
+	// }
+
+	Node node;
+	dualLagrangiano(node, data->getDimension(), cost);
 
 	//antes de tudo tem que implementar a ideia de resolver o dualLagrangiano
 
@@ -272,8 +292,6 @@ int main(int argc, char** argv){
 
 	printf("%.3lf %.2lf\n", tempoTotal, valorTotal);
 
-	for (int i = 0; i < data->getDimension(); i++) delete [] cost[i];
-	delete [] cost;
 	delete data;
 
 	//debug
